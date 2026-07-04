@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  role      String    @default("customer")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  reviews   Review[]
+}
+
+model Route {
+  id        String    @id @default(uuid())
+  routeId   String    @unique
+  from      String
+  to        String
+  price     String
+  time      String
+  type      String
+  image     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  reviews   Review[]
+}
+
+model Vehicle {
+  id            String         @id @default(uuid())
+  name          String
+  type          String
+  capacity      Int
+  registration  String         @unique
+  status        String         @default("active") // active, maintenance, retired
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  quoteRequests QuoteRequest[]
+}
+
+model Driver {
+  id            String         @id @default(uuid())
+  name          String
+  license       String         @unique
+  phone         String
+  status        String         @default("active") // active, on-leave, inactive
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  quoteRequests QuoteRequest[]
+}
+
+model QuoteRequest {
+  id            String   @id @default(uuid())
+  routeId       String?
+  pickup        String
+  dropoff       String
+  date          String
+  returnDate    String?
+  passengers    String
+  busType       String
+  mealType      String
+  accommodation String
+  contactName   String
+  companyName   String?
+  phone         String
+  email         String
+  notes         String?
+  status        String   @default("Pending")
+  driverId      String?
+  driver        Driver?  @relation(fields: [driverId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle? @relation(fields: [vehicleId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+  routeId       String
+  route         Route    @relation(fields: [routeId], references: [id])
+  date          String
+  passengers    Int
+  totalPrice    String
+  status        String   @default("Confirmed") // Confirmed, Cancelled, Completed
+  paymentStatus String   @default("Pending") // Pending, Paid
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1 to 5
+  comment   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  routeId   String
+  route     Route    @relation(fields: [routeId], references: [id])
+  status    String   @default("Pending") // Pending, Approved, Rejected
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
