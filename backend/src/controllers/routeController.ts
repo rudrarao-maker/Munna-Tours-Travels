@@ -26,7 +26,7 @@ export const getRoutes = async (req: Request, res: Response) => {
 export const getRouteById = async (req: Request, res: Response): Promise<void> => {
   try {
     const route = await prisma.route.findUnique({
-      where: { routeId: req.params.id },
+      where: { routeId: (req.params.id as string) },
     });
     if (!route) {
       res.status(404).json({ message: 'Route not found' });
@@ -52,7 +52,7 @@ export const createRoute = async (req: Request, res: Response) => {
 export const deleteRoute = async (req: Request, res: Response): Promise<void> => {
   try {
     await prisma.route.delete({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
     });
     res.json({ message: 'Route removed' });
   } catch (error) {
@@ -63,7 +63,7 @@ export const deleteRoute = async (req: Request, res: Response): Promise<void> =>
 export const updateRoute = async (req: Request, res: Response): Promise<void> => {
   try {
     const updatedRoute = await prisma.route.update({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       data: req.body,
     });
     res.json(updatedRoute);

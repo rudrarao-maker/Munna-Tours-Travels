@@ -28,7 +28,7 @@ export const getBookings = async (req: Request, res: Response) => {
 export const getBookingById = async (req: Request, res: Response) => {
   try {
     const booking = await prisma.booking.findUnique({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       include: { route: true, user: true }
     });
     if (booking) {
@@ -75,7 +75,7 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
   try {
     const { status, paymentStatus } = req.body;
     const booking = await prisma.booking.update({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       data: { status, paymentStatus }
     });
     res.json(booking);

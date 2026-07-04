@@ -26,7 +26,7 @@ export const createVehicle = async (req: Request, res: Response) => {
 export const updateVehicle = async (req: Request, res: Response): Promise<void> => {
   try {
     const updatedVehicle = await prisma.vehicle.update({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       data: req.body,
     });
     res.json(updatedVehicle);
@@ -38,7 +38,7 @@ export const updateVehicle = async (req: Request, res: Response): Promise<void> 
 export const deleteVehicle = async (req: Request, res: Response): Promise<void> => {
   try {
     await prisma.vehicle.delete({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
     });
     res.json({ message: 'Vehicle removed' });
   } catch (error) {

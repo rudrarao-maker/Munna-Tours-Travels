@@ -9,11 +9,7 @@ const prisma = new PrismaClient();
 export const getAnalytics = async (req: Request, res: Response) => {
   try {
     const totalBookings = await prisma.booking.count();
-    const totalRevenueResult = await prisma.booking.aggregate({
-      _sum: {
-        totalPrice: true // Wait, totalPrice is String in schema. We need to parse it in JS.
-      }
-    });
+    // Calculate revenue since it's a string in DB
     
     // Calculate revenue since it's a string in DB
     const allBookings = await prisma.booking.findMany({ select: { totalPrice: true }});

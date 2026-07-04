@@ -39,7 +39,7 @@ export const updateDriver = async (req: Request, res: Response) => {
   try {
     const { name, license, phone, status } = req.body;
     const driver = await prisma.driver.update({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       data: { name, license, phone, status }
     });
     res.json(driver);
@@ -54,7 +54,7 @@ export const updateDriver = async (req: Request, res: Response) => {
 export const deleteDriver = async (req: Request, res: Response) => {
   try {
     await prisma.driver.delete({
-      where: { id: req.params.id }
+      where: { id: (req.params.id as string) }
     });
     res.json({ message: 'Driver removed' });
   } catch (error: any) {

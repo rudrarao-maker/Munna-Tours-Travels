@@ -42,7 +42,7 @@ export const getQuoteRequests = async (req: Request, res: Response) => {
 export const updateQuoteStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const quote = await prisma.quoteRequest.update({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       data: { status: req.body.status },
     });
     res.json(quote);

@@ -52,7 +52,7 @@ export const updateReviewStatus = async (req: Request, res: Response) => {
   try {
     const { status } = req.body;
     const review = await prisma.review.update({
-      where: { id: req.params.id },
+      where: { id: (req.params.id as string) },
       data: { status }
     });
     res.json(review);
@@ -67,7 +67,7 @@ export const updateReviewStatus = async (req: Request, res: Response) => {
 export const deleteReview = async (req: Request, res: Response) => {
   try {
     await prisma.review.delete({
-      where: { id: req.params.id }
+      where: { id: (req.params.id as string) }
     });
     res.json({ message: 'Review removed' });
   } catch (error: any) {
