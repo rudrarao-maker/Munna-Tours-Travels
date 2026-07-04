@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, MapPin, Calendar, Users, Wallet, Compass, Clock, Lightbulb, Loader2, ArrowRight } from 'lucide-react';
-import axios from 'axios';
+import axios from '@/lib/axios';
 
 type Activity = { time: string; activity: string; location: string };
 type DayPlan = { day: number; title: string; activities: Activity[] };
@@ -31,7 +31,7 @@ export default function TripPlannerPage() {
     setLoading(true);
     setPlan(null);
     try {
-      const res = await axios.post('http://localhost:5000/api/ai/trip-plan', form);
+      const res = await axios.post('/ai/trip-plan', form);
       setPlan(res.data);
     } catch (err) {
       console.error('Failed to generate trip plan', err);

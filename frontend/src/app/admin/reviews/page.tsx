@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '@/lib/axios';
 import { Star, Check, X, Trash2 } from 'lucide-react';
 
 export default function AdminReviewsPage() {
@@ -13,7 +13,7 @@ export default function AdminReviewsPage() {
 
   const fetchReviews = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/reviews');
+      const res = await axios.get('/reviews');
       setReviews(res.data);
     } catch (err) {
       console.error('Failed to fetch reviews', err);
@@ -22,7 +22,7 @@ export default function AdminReviewsPage() {
 
   const handleStatus = async (id: string, status: string) => {
     try {
-      await axios.put(`http://localhost:5000/api/reviews/${id}`, { status });
+      await axios.put(`/reviews/${id}`, { status });
       fetchReviews();
     } catch (err) {
       console.error('Failed to update review', err);
@@ -32,7 +32,7 @@ export default function AdminReviewsPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this review?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/reviews/${id}`);
+      await axios.delete(`/reviews/${id}`);
       fetchReviews();
     } catch (err) {
       console.error('Failed to delete review', err);

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Calendar, Clock, ArrowRight, Bus, Phone, Mail, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
-import axios from 'axios';
+import axios from '@/lib/axios';
 
 type RouteData = {
   id: string;
@@ -40,7 +40,7 @@ export default function RoutesPage() {
   useEffect(() => {
     const fetchRoutes = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/routes');
+        const res = await axios.get('/routes');
         setRoutes(res.data);
       } catch (error) {
         console.error('Failed to fetch routes', error);
@@ -55,7 +55,7 @@ export default function RoutesPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await axios.post('http://localhost:5000/api/quotes', formData);
+      await axios.post('/quotes', formData);
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 3000);
       setFormData({

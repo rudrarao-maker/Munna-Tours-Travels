@@ -5,7 +5,7 @@ import {
   TrendingUp, Users, Map, Bus, 
   DollarSign, Package 
 } from 'lucide-react';
-import axios from 'axios';
+import axios from '@/lib/axios';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/analytics');
+        const res = await axios.get('/analytics');
         setAnalytics(res.data);
       } catch (err) {
         console.error("Failed to fetch analytics");

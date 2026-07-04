@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '@/lib/axios';
 import { Bus, User as DriverIcon, Plus } from 'lucide-react';
 
 export default function FleetManagement() {
@@ -13,7 +13,7 @@ export default function FleetManagement() {
 
   const fetchDrivers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/drivers');
+      const res = await axios.get('/drivers');
       setDrivers(res.data);
     } catch (err) {
       console.error('Failed to fetch drivers', err);

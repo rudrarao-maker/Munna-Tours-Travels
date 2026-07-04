@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Calendar, Clock, Bus, Users, Utensils, Phone, Mail, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '@/lib/axios';
 
 type RouteData = {
   id: string;
@@ -44,7 +44,7 @@ export default function QuoteRequestPage() {
   useEffect(() => {
     const fetchRoute = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/routes/${slug}`);
+        const res = await axios.get(`/routes/${slug}`);
         setRoute(res.data);
       } catch (err) {
         console.error('Route not found');
@@ -85,7 +85,7 @@ export default function QuoteRequestPage() {
     
     try {
       // 1. Save the quote/booking request
-      const quoteRes = await axios.post('http://localhost:5000/api/quotes', {
+      const quoteRes = await axios.post('/quotes', {
         ...formData,
         routeId: route?.routeId,
         pickup: route?.from,
@@ -93,7 +93,7 @@ export default function QuoteRequestPage() {
       });
 
       // 2. Create Razorpay Order (e.g. ₹500 Advance Deposit)
-      const orderRes = await axios.post('http://localhost:5000/api/payments/create-order', {
+      const orderRes = await axios.post('/payments/create-order', {
         amount: 500, // 500 INR
         receipt: `receipt_${quoteRes.data.id}`
       });
@@ -109,7 +109,7 @@ export default function QuoteRequestPage() {
         handler: async function (response: any) {
           // 4. Verify Payment on Success
           try {
-            await axios.post('http://localhost:5000/api/payments/verify', {
+            await axios.post('/payments/verify', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,

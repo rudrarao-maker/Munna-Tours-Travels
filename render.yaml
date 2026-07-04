@@ -1,0 +1,37 @@
+services:
+  # Free PostgreSQL Database
+  - type: pgr
+    name: munna-db
+    plan: free
+
+  # Backend Web Service
+  - type: web
+    name: munna-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: munna-db
+          property: connectionString
+      - key: CLIENT_URL
+        value: https://munna-frontend.onrender.com
+      - key: NODE_ENV
+        value: production
+
+  # Frontend Web Service
+  - type: web
+    name: munna-frontend
+    env: node
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://munna-backend.onrender.com/api
+      - key: NODE_ENV
+        value: production

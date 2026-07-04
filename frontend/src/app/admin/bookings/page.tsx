@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '@/lib/axios';
 import { Calendar, Plus } from 'lucide-react';
 
 export default function BookingsManagement() {
@@ -13,7 +13,7 @@ export default function BookingsManagement() {
 
   const fetchBookings = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/bookings');
+      const res = await axios.get('/bookings');
       setBookings(res.data);
     } catch (err) {
       console.error('Failed to fetch bookings', err);
