@@ -1,101 +1,155 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Bus, MapPin, Navigation2, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { GoogleMap, useJsApiLoader, Marker, DirectionsService, DirectionsRenderer } from '@react-google-maps/api';
+
+const containerStyle = {
+  width: '100%',
+  height: '100%'
+};
+
+// Mumbai to Goa coords
+const MUMBAI = { lat: 19.0760, lng: 72.8777 };
+const GOA = { lat: 15.2993, lng: 74.1240 };
 
 export default function TrackingPage() {
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8' // Fallback for demo
+  });
+
+  const [directionsResponse, setDirectionsResponse] = useState<any>(null);
+  const [busPosition, setBusPosition] = useState(MUMBAI);
   const [progress, setProgress] = useState(0);
 
-  // Simulate bus movement
+  // Directions callback
+  const directionsCallback = useCallback((response: any) => {
+    if (response !== null && response.status === 'OK') {
+      setDirectionsResponse(response);
+    }
+  }, []);
+
+  // Simulate Bus Movement along the straight line for demo
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress(prev => (prev < 100 ? prev + 1 : 0));
-    }, 1000);
+      setProgress((prev) => {
+        const next = prev + 0.01;
+        return next > 1 ? 0 : next;
+      });
+    }, 500);
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    // Interpolate lat/lng based on progress
+    const lat = MUMBAI.lat + (GOA.lat - MUMBAI.lat) * progress;
+    const lng = MUMBAI.lng + (GOA.lng - MUMBAI.lng) * progress;
+    setBusPosition({ lat, lng });
+  }, [progress]);
+
+  const mapOptions = useMemo(() => ({
+    disableDefaultUI: true,
+    zoomControl: true,
+  }), []);
+
   return (
     <div className="bg-gray-50 min-h-screen py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Live Trip Tracking</h1>
-          <p className="text-gray-600">Tracking Trip ID: #MN-847291 (Mumbai to Goa)</p>
+      <div className="container mx-auto px-4 max-w-5xl">
+        <div className="text-center mb-8 pt-12">
+          <h1 className="text-3xl font-black text-black tracking-tight mb-2">Live Trip Tracking</h1>
+          <p className="text-gray-500 font-medium">Tracking Trip ID: #MN-847291 (Mumbai to Goa)</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md border overflow-hidden">
-          {/* Mock Map Area */}
-          <div className="relative h-[400px] bg-blue-50 w-full overflow-hidden">
-            <img 
-              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1200&auto=format&fit=crop" 
-              alt="Map Background" 
-              className="absolute inset-0 w-full h-full object-cover opacity-60"
-            />
-            
-            {/* The Route Line */}
-            <div className="absolute top-1/2 left-1/4 right-1/4 h-2 bg-blue-200 rounded-full shadow-inner transform -translate-y-1/2" />
-            
-            {/* The Bus (Moving) */}
-            <motion.div 
-              className="absolute top-1/2 transform -translate-y-1/2 -ml-6"
-              style={{ left: `calc(25% + ${progress * 0.5}%)` }} // Moves from 25% to 75%
-            >
-              <div className="relative">
-                <div className="w-12 h-12 bg-white rounded-full shadow-xl flex items-center justify-center border-4 border-blue-600 z-20 relative">
-                  <Bus className="text-blue-600" size={24} />
-                </div>
-                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs font-bold py-1 px-3 rounded whitespace-nowrap shadow-lg">
-                  65 km/h
-                </div>
-              </div>
-            </motion.div>
+        <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden">
+          {/* Map Area */}
+          <div className="relative h-[500px] w-full">
+            {isLoaded ? (
+              <GoogleMap
+                mapContainerStyle={containerStyle}
+                center={busPosition}
+                zoom={7}
+                options={mapOptions}
+              >
+                {/* Request directions between Mumbai and Goa */}
+                {!directionsResponse && (
+                  <DirectionsService
+                    options={{
+                      destination: GOA,
+                      origin: MUMBAI,
+                      travelMode: 'DRIVING' as any
+                    }}
+                    callback={directionsCallback}
+                  />
+                )}
 
-            {/* Start and End Markers */}
-            <div className="absolute top-1/2 left-1/4 transform -translate-y-1/2 -ml-4 z-10">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                <MapPin className="text-white" size={16} />
-              </div>
-              <div className="absolute top-10 left-1/2 transform -translate-x-1/2 text-sm font-bold bg-white px-2 py-1 rounded shadow">Mumbai</div>
-            </div>
+                {/* Render the route line */}
+                {directionsResponse && (
+                  <DirectionsRenderer
+                    options={{
+                      directions: directionsResponse,
+                      suppressMarkers: true, // We will use our own markers
+                      polylineOptions: {
+                        strokeColor: '#000000',
+                        strokeWeight: 4,
+                      }
+                    }}
+                  />
+                )}
 
-            <div className="absolute top-1/2 right-1/4 transform -translate-y-1/2 mr-4 z-10">
-              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                <MapPin className="text-white" size={16} />
+                {/* Origin Marker */}
+                <Marker position={MUMBAI} label="MUMBAI" />
+                
+                {/* Destination Marker */}
+                <Marker position={GOA} label="GOA" />
+
+                {/* Moving Bus Marker */}
+                <Marker 
+                  position={busPosition} 
+                  icon={{
+                    url: 'https://cdn-icons-png.flaticon.com/512/3448/3448338.png', // A bus icon URL
+                    scaledSize: isLoaded ? new window.google.maps.Size(40, 40) : undefined,
+                  }}
+                />
+
+              </GoogleMap>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 font-bold text-gray-500">
+                Loading Google Maps...
               </div>
-              <div className="absolute top-10 left-1/2 transform -translate-x-1/2 text-sm font-bold bg-white px-2 py-1 rounded shadow">Goa</div>
-            </div>
+            )}
           </div>
 
           {/* Status Panel */}
-          <div className="p-6 bg-white border-t">
+          <div className="p-8 bg-white border-t border-gray-100">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                  <Navigation2 />
+                <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md">
+                  <Navigation2 size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Next Stop</p>
-                  <p className="font-bold text-gray-900">Pune Toll Plaza</p>
+                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">Next Stop</p>
+                  <p className="font-black text-black text-lg">Pune Toll Plaza</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4 border-l pl-6">
-                <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center shrink-0">
-                  <Clock />
+              <div className="flex items-center gap-4 md:border-l border-gray-100 md:pl-6">
+                <div className="w-12 h-12 bg-black text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md">
+                  <Clock size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Estimated Arrival</p>
-                  <p className="font-bold text-gray-900">08:45 PM</p>
+                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">Estimated Arrival</p>
+                  <p className="font-black text-black text-lg">08:45 PM</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 border-l pl-6">
-                <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center shrink-0">
-                  <MapPin />
+              <div className="flex items-center gap-4 md:border-l border-gray-100 md:pl-6">
+                <div className="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md">
+                  <MapPin size={20} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Distance Remaining</p>
-                  <p className="font-bold text-gray-900">324 km</p>
+                  <p className="text-sm text-gray-500 font-bold uppercase tracking-wider">Status</p>
+                  <p className="font-black text-green-600 text-lg">On Time</p>
                 </div>
               </div>
             </div>

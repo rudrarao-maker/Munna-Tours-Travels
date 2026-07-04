@@ -14,6 +14,7 @@ import driverRoutes from './routes/driverRoutes';
 import reviewRoutes from './routes/reviewRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import aiRoutes from './routes/aiRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use('/api/drivers', driverRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/payments', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.send('Munna Tours & Travels API is running...');

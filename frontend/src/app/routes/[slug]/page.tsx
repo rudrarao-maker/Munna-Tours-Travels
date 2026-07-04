@@ -71,24 +71,78 @@ export default function QuoteRequestPage() {
     );
   }
 
+  // Load Razorpay Script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     
     try {
-      await axios.post('http://localhost:5000/api/quotes', {
+      // 1. Save the quote/booking request
+      const quoteRes = await axios.post('http://localhost:5000/api/quotes', {
         ...formData,
-        routeId: route.routeId,
-        pickup: route.from,
-        dropoff: route.to,
+        routeId: route?.routeId,
+        pickup: route?.from,
+        dropoff: route?.to,
       });
-      setIsSubmitted(true);
-      setTimeout(() => {
-        router.push('/routes');
-      }, 3000);
+
+      // 2. Create Razorpay Order (e.g. ₹500 Advance Deposit)
+      const orderRes = await axios.post('http://localhost:5000/api/payments/create-order', {
+        amount: 500, // 500 INR
+        receipt: `receipt_${quoteRes.data.id}`
+      });
+
+      // 3. Open Razorpay Checkout Modal
+      const options = {
+        key: 'rzp_test_mock123', // Demo Key
+        amount: orderRes.data.amount,
+        currency: orderRes.data.currency,
+        name: 'Munna Travels',
+        description: 'Advance Booking Deposit',
+        order_id: orderRes.data.id,
+        handler: async function (response: any) {
+          // 4. Verify Payment on Success
+          try {
+            await axios.post('http://localhost:5000/api/payments/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            setIsSubmitted(true);
+            setTimeout(() => {
+              router.push('/routes');
+            }, 3000);
+          } catch (verifyErr) {
+            console.error('Verification failed', verifyErr);
+            alert('Payment verification failed.');
+          }
+        },
+        prefill: {
+          name: formData.contactName,
+          email: formData.email,
+          contact: formData.phone
+        },
+        theme: {
+          color: '#000000'
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any){
+        alert('Payment Failed: ' + response.error.description);
+        setSubmitting(false);
+      });
+      rzp.open();
+
     } catch (err) {
-      console.error('Failed to submit quote');
-      alert('Error submitting quote request.');
+      console.error('Failed to process booking', err);
+      alert('Error processing your request.');
       setSubmitting(false);
     }
   };

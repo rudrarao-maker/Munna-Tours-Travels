@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   title: 'Munna Travels | Premium Charter Bus & Group Bookings',
   description: 'Book premium charter buses and coaches for your group trips across India. We offer Volvo, Scania, and luxury minibuses with customizable itineraries.',
   keywords: 'charter bus, bus booking, group travel, india bus tours, volvo hire, luxury coach rental',
+  manifest: '/manifest.json',
   openGraph: {
     title: 'Munna Travels | Premium Charter Bus & Group Bookings',
     description: 'Book premium charter buses and coaches for your group trips across India.',
