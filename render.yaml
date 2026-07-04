@@ -1,7 +1,7 @@
 services:
   # Backend Web Service (SQLite, ephemeral data)
   - type: web
-    name: munna-backend
+    name: munna-tours-api
     env: node
     plan: free
     rootDir: backend
@@ -9,13 +9,13 @@ services:
     startCommand: npm start
     envVars:
       - key: CLIENT_URL
-        value: https://munna-frontend.onrender.com
+        value: https://munna-tours-web.onrender.com
       - key: NODE_ENV
         value: production
 
   # Frontend Web Service
   - type: web
-    name: munna-frontend
+    name: munna-tours-web
     env: node
     plan: free
     rootDir: frontend
@@ -23,6 +23,6 @@ services:
     startCommand: npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://munna-backend.onrender.com/api
+        value: https://munna-tours-api.onrender.com/api
       - key: NODE_ENV
         value: production
