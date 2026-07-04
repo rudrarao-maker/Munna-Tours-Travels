@@ -1,8 +1,9 @@
-services:
+databases:
   # Free PostgreSQL Database
-  - type: pgr
-    name: munna-db
+  - name: munna-db
     plan: free
+
+services:
 
   # Backend Web Service
   - type: web
