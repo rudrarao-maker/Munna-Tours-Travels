@@ -8,6 +8,7 @@ import { Server } from 'socket.io';
 
 // Middlewares
 import { generalLimiter, authLimiter, paymentLimiter } from './middlewares/rateLimiter';
+import { errorHandler } from './middlewares/errorHandler';
 
 // Config
 import { initRedis } from './config/redis';
@@ -175,6 +176,9 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res) => {
   res.send('Munna Tours & Travels API is running — AI Smart Tourism & Transport Management System v2.0');
 });
+
+// Global Error Handler
+app.use(errorHandler);
 
 // Initialize Redis (non-blocking, app works without it)
 initRedis().catch(() => {

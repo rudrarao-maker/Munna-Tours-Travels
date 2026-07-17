@@ -5,6 +5,7 @@ import { Calendar, MapPin, Clock, ArrowRight, Download, FileText, Sparkles } fro
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import axios from '@/lib/axios';
+import toast from 'react-hot-toast';
 
 export default function DashboardOverview() {
   const [downloading, setDownloading] = useState(false);
@@ -48,7 +49,7 @@ export default function DashboardOverview() {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Download failed:', error);
-      alert('Failed to download ticket. Please try again.');
+      toast.error('Failed to download ticket. Please try again.');
     } finally {
       setDownloading(false);
     }
@@ -65,11 +66,11 @@ export default function DashboardOverview() {
       if (!response.ok) {
         throw new Error(data.message || 'Failed to cancel booking');
       }
-      alert(`Booking cancelled successfully. Refund amount: ₹${data.refundAmount}`);
+      toast.success(`Booking cancelled successfully. Refund amount: ₹${data.refundAmount}`);
       // Refresh logic would go here in a real app
     } catch (error: any) {
       console.error('Cancel failed:', error);
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -77,28 +78,26 @@ export default function DashboardOverview() {
     <div className="space-y-8">
 
       <div>
-        <h1 className="text-3xl font-black tracking-tight mb-2" style={{ color: 'var(--foreground)' }}>Dashboard Overview</h1>
-        <p className="font-medium" style={{ color: 'var(--muted)' }}>Manage your tickets, save your favorite routes, and track your buses.</p>
+        <h1 className="text-3xl font-black tracking-tight mb-2 text-foreground">Dashboard Overview</h1>
+        <p className="font-medium text-muted">Manage your tickets, save your favorite routes, and track your buses.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-3xl border flex flex-col justify-between"
-          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', boxShadow: 'var(--shadow-card)' }}>
+        <div className="p-6 rounded-3xl border flex flex-col justify-between bg-card border-border shadow-card">
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--muted)' }}>Upcoming Trips</p>
-            <h3 className="text-4xl font-black" style={{ color: 'var(--foreground)' }}>1</h3>
+            <p className="text-sm font-bold uppercase tracking-widest mb-2 text-muted">Upcoming Trips</p>
+            <h3 className="text-4xl font-black text-foreground">1</h3>
           </div>
-          <Link href="/dashboard/bookings" className="text-sm font-bold flex items-center mt-4 group" style={{ color: 'var(--foreground)' }}>
+          <Link href="/dashboard/bookings" className="text-sm font-bold flex items-center mt-4 group text-foreground">
             View Details <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
-        <div className="p-6 rounded-3xl border flex flex-col justify-between"
-          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', boxShadow: 'var(--shadow-card)' }}>
+        <div className="p-6 rounded-3xl border flex flex-col justify-between bg-card border-border shadow-card">
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--muted)' }}>Saved Routes</p>
-            <h3 className="text-4xl font-black" style={{ color: 'var(--foreground)' }}>4</h3>
+            <p className="text-sm font-bold uppercase tracking-widest mb-2 text-muted">Saved Routes</p>
+            <h3 className="text-4xl font-black text-foreground">4</h3>
           </div>
-          <Link href="/dashboard/saved" className="text-sm font-bold flex items-center mt-4 group" style={{ color: 'var(--foreground)' }}>
+          <Link href="/dashboard/saved" className="text-sm font-bold flex items-center mt-4 group text-foreground">
             View Saved <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -112,13 +111,11 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      <div className="p-8 rounded-3xl border"
-        style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', boxShadow: 'var(--shadow-card)' }}>
-        <h2 className="text-2xl font-black mb-6" style={{ color: 'var(--foreground)' }}>Your Next Adventure</h2>
+      <div className="p-8 rounded-3xl border bg-card border-border shadow-card">
+        <h2 className="text-2xl font-black mb-6 text-foreground">Your Next Adventure</h2>
         
-        <div className="border rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row gap-6 items-center"
-          style={{ borderColor: 'var(--card-border)' }}>
-          <div className="w-full sm:w-1/3 h-48 rounded-xl overflow-hidden relative" style={{ backgroundColor: 'var(--section-alt)' }}>
+        <div className="border rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row gap-6 items-center border-border">
+          <div className="w-full sm:w-1/3 h-48 rounded-xl overflow-hidden relative bg-section-alt">
             <div 
               className="absolute inset-0 bg-cover bg-center"
               style={{ backgroundImage: "url('https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=600&auto=format&fit=crop')" }}
@@ -126,11 +123,12 @@ export default function DashboardOverview() {
           </div>
           <div className="w-full sm:w-2/3 flex flex-col justify-center">
             <div className="flex gap-2 mb-3">
-              <span className="px-3 py-1 rounded-md text-xs font-black uppercase tracking-wider"
-                style={{ backgroundColor: 'var(--section-alt)', color: 'var(--foreground)' }}>Confirmed</span>
+              <span className="px-3 py-1 rounded-md text-xs font-black uppercase tracking-wider bg-section-alt text-foreground">
+                Confirmed
+              </span>
             </div>
-            <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--foreground)' }}>Kerala Backwaters Retreat</h3>
-            <div className="flex flex-wrap items-center gap-4 font-medium mb-6" style={{ color: 'var(--muted)' }}>
+            <h3 className="text-2xl font-black mb-2 text-foreground">Kerala Backwaters Retreat</h3>
+            <div className="flex flex-wrap items-center gap-4 font-medium mb-6 text-muted">
               <span className="flex items-center"><MapPin className="mr-1" size={16} /> Kerala, India</span>
               <span className="flex items-center"><Clock className="mr-1" size={16} /> 3N/4D</span>
               <span className="flex items-center"><Calendar className="mr-1" size={16} /> Oct 15, 2026</span>
@@ -151,25 +149,23 @@ export default function DashboardOverview() {
               >
                 Cancel Booking
               </button>
-              <button className="px-6 py-3 rounded-xl font-bold transition"
-                style={{ backgroundColor: 'var(--section-alt)', color: 'var(--foreground)' }}>Contact Support</button>
+              <button className="px-6 py-3 rounded-xl font-bold transition bg-section-alt text-foreground">Contact Support</button>
             </div>
           </div>
         </div>
       </div>
 
       {/* AI Recommendations */}
-      <div className="p-8 rounded-3xl border relative overflow-hidden"
-        style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', boxShadow: 'var(--shadow-card)' }}>
+      <div className="p-8 rounded-3xl border relative overflow-hidden bg-card border-border shadow-card">
         
         <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
           <Sparkles size={120} />
         </div>
 
-        <h2 className="text-2xl font-black mb-2 flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+        <h2 className="text-2xl font-black mb-2 flex items-center gap-2 text-foreground">
           <Sparkles className="text-purple-500" /> AI Recommendations
         </h2>
-        <p className="font-medium mb-6 max-w-3xl" style={{ color: 'var(--muted)' }}>
+        <p className="font-medium mb-6 max-w-3xl text-muted">
           {loadingAi ? 'Analyzing your travel history...' : (rationale || 'Handpicked trips just for you.')}
         </p>
         
@@ -180,12 +176,12 @@ export default function DashboardOverview() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {recommendations.map((pkg, i) => (
-              <Link href={`/packages/${pkg.slug}`} key={i} className="group block border rounded-2xl p-4 hover:shadow-xl transition-all hover:-translate-y-1" style={{ borderColor: 'var(--card-border)' }}>
+              <Link href={`/packages/${pkg.slug}`} key={i} className="group block border rounded-2xl p-4 hover:shadow-xl transition-all hover:-translate-y-1 border-border">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-black text-lg line-clamp-1" style={{ color: 'var(--foreground)' }}>{pkg.title}</h3>
+                  <h3 className="font-black text-lg line-clamp-1 text-foreground">{pkg.title}</h3>
                 </div>
                 <p className="text-sm font-medium mb-4 flex items-center text-gray-500"><MapPin size={14} className="mr-1" /> {pkg.destination}</p>
-                <div className="flex justify-between items-end mt-4 pt-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
+                <div className="flex justify-between items-end mt-4 pt-4 border-t border-border">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Starting From</p>
                     <p className="text-lg font-black text-green-500">₹{pkg.price}</p>

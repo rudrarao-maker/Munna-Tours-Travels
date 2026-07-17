@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/prisma';
+import { AppError } from '../utils/AppError';
 
 export interface AuthRequest extends Request {
   user?: any;
@@ -31,12 +32,12 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
       }
       next();
     } catch (error) {
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      return next(new AppError('Not authorized, token failed', 401));
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    return next(new AppError('Not authorized, no token', 401));
   }
 };
 
@@ -49,7 +50,7 @@ export const authorize = (...roles: string[]) => {
     if (req.user && roles.includes(req.user.role)) {
       next();
     } else {
-      res.status(403).json({ message: `Role ${req.user?.role} is not authorized to access this route` });
+      next(new AppError(`Role ${req.user?.role || 'guest'} is not authorized to access this route`, 403));
     }
   };
 };
@@ -86,6 +87,6 @@ export const driverOnly = (req: AuthRequest, res: Response, next: NextFunction):
   if (req.user && req.user.role === 'driver') {
     next();
   } else {
-    res.status(403).json({ message: 'Access restricted to drivers only' });
+    next(new AppError('Access restricted to drivers only', 403));
   }
 };

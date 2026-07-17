@@ -2,6 +2,7 @@ import { createClient, RedisClientType } from 'redis';
 
 let redisClient: RedisClientType | null = null;
 let isConnected = false;
+let hasLoggedError = false;
 
 /**
  * Initialize Redis connection.
@@ -10,10 +11,21 @@ let isConnected = false;
 export async function initRedis(): Promise<void> {
   try {
     const url = process.env.REDIS_URL || 'redis://localhost:6379';
-    redisClient = createClient({ url });
+    redisClient = createClient({ 
+      url,
+      socket: {
+        reconnectStrategy: (retries) => {
+          if (retries > 0) return new Error('Max retries reached'); // Do not retry
+          return false;
+        }
+      }
+    });
 
     redisClient.on('error', (err) => {
-      console.warn('Redis connection error (caching disabled):', err.message);
+      if (!hasLoggedError) {
+        console.warn('Redis connection error (caching disabled):', err.message);
+        hasLoggedError = true;
+      }
       isConnected = false;
     });
 

@@ -5,6 +5,7 @@ import Providers from './providers';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AIChatbot from '@/components/AIChatbot';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,6 +40,7 @@ export default function RootLayout({
             <Footer />
             <AIChatbot />
           </div>
+          <Toaster position="bottom-right" />
         </Providers>
       </body>
     </html>

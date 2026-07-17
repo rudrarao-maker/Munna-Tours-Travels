@@ -17,6 +17,7 @@
     "@prisma/client": "^5.22.0",
     "axios": "^1.18.1",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.80.6",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -30,7 +31,8 @@
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.6",
     "redis": "^6.0.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

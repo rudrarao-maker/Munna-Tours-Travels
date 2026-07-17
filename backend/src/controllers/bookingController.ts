@@ -1,33 +1,53 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { generateAndSendPDF } from '../utils/emailService';
 import { generateTicketPDF } from '../utils/pdfGenerator';
+import { AppError } from '../utils/AppError';
+import { emailQueue } from '../utils/queue';
 
 const prisma = new PrismaClient();
 
 // @desc    Get all bookings
 // @route   GET /api/bookings
 // @access  Private/Admin
-export const getBookings = async (req: Request, res: Response) => {
+export const getBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const bookings = await prisma.booking.findMany({
-      include: {
-        route: true,
-        user: true,
-        hotel: true,
-      },
-      orderBy: { createdAt: 'desc' }
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const [bookings, total] = await Promise.all([
+      prisma.booking.findMany({
+        skip,
+        take: limit,
+        include: {
+          route: true,
+          user: true,
+          hotel: true,
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.booking.count()
+    ]);
+    
+    res.status(200).json({
+      bookings,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
     });
-    res.json(bookings);
   } catch (error: any) {
-    res.status(500).json({ message: 'Error fetching bookings', error: error.message });
+    next(new AppError('Error fetching bookings', 500));
   }
 };
 
 // @desc    Get single booking
 // @route   GET /api/bookings/:id
 // @access  Private
-export const getBookingById = async (req: Request, res: Response) => {
+export const getBookingById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: (req.params.id as string) },
@@ -36,17 +56,17 @@ export const getBookingById = async (req: Request, res: Response) => {
     if (booking) {
       res.json(booking);
     } else {
-      res.status(404).json({ message: 'Booking not found' });
+      next(new AppError('Booking not found', 404));
     }
   } catch (error: any) {
-    res.status(500).json({ message: 'Error fetching booking', error: error.message });
+    next(new AppError('Error fetching booking', 500));
   }
 };
 
 // @desc    Create a booking
 // @route   POST /api/bookings
 // @access  Public/Private
-export const createBooking = async (req: Request, res: Response) => {
+export const createBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { 
       routeId, date, passengers, userId, userEmail,
@@ -72,21 +92,21 @@ export const createBooking = async (req: Request, res: Response) => {
       }
     });
 
-    // Generate PDF and Send Email (non-blocking)
+    // Add email task to the background queue
     if (userEmail) {
-      generateAndSendPDF(booking, userEmail).catch(err => console.error('Failed to send email/PDF:', err));
+      await emailQueue.add('sendBookingConfirmation', { booking, userEmail });
     }
 
     res.status(201).json(booking);
   } catch (error: any) {
-    res.status(500).json({ message: 'Error creating booking', error: error.message });
+    next(new AppError('Error creating booking', 500));
   }
 };
 
 // @desc    Update a booking status
 // @route   PUT /api/bookings/:id
 // @access  Private/Admin
-export const updateBookingStatus = async (req: Request, res: Response) => {
+export const updateBookingStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { status, paymentStatus } = req.body;
     const booking = await prisma.booking.update({
@@ -95,14 +115,14 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
     });
     res.json(booking);
   } catch (error: any) {
-    res.status(500).json({ message: 'Error updating booking', error: error.message });
+    next(new AppError('Error updating booking', 500));
   }
 };
 
 // @desc    Download e-ticket PDF for a booking
 // @route   GET /api/bookings/:id/ticket
 // @access  Public
-export const downloadTicket = async (req: Request, res: Response) => {
+export const downloadTicket = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: (req.params.id as string) },
@@ -110,8 +130,7 @@ export const downloadTicket = async (req: Request, res: Response) => {
     });
 
     if (!booking) {
-      res.status(404).json({ message: 'Booking not found' });
-      return;
+      return next(new AppError('Booking not found', 404));
     }
 
     const pdfBuffer = await generateTicketPDF(booking);
@@ -125,27 +144,25 @@ export const downloadTicket = async (req: Request, res: Response) => {
     res.send(pdfBuffer);
   } catch (error: any) {
     console.error('Error generating ticket PDF:', error);
-    res.status(500).json({ message: 'Error generating ticket', error: error.message });
+    next(new AppError('Error generating ticket', 500));
   }
 };
 
 // @desc    Cancel a booking
 // @route   PUT /api/bookings/:id/cancel
 // @access  Public (should ideally be protected, but keeping public for demo)
-export const cancelBooking = async (req: Request, res: Response) => {
+export const cancelBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: (req.params.id as string) },
     });
 
     if (!booking) {
-      res.status(404).json({ message: 'Booking not found' });
-      return;
+      return next(new AppError('Booking not found', 404));
     }
 
     if (booking.status === 'Cancelled') {
-      res.status(400).json({ message: 'Booking is already cancelled' });
-      return;
+      return next(new AppError('Booking is already cancelled', 400));
     }
 
     const departureDate = new Date(booking.date);
@@ -174,6 +191,6 @@ export const cancelBooking = async (req: Request, res: Response) => {
       booking: updatedBooking
     });
   } catch (error: any) {
-    res.status(500).json({ message: 'Error cancelling booking', error: error.message });
+    next(new AppError('Error cancelling booking', 500));
   }
 };

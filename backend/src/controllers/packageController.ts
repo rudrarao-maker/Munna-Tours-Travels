@@ -1,18 +1,50 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/prisma';
+import { getCache, setCache, invalidateCachePattern } from '../config/redis';
+import { AppError } from '../utils/AppError';
 
-export const getAllPackages = async (req: Request, res: Response): Promise<void> => {
+export const getAllPackages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const packages = await prisma.tourPackage.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-    res.status(200).json(packages);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    const cacheKey = `packages:all:page:${page}:limit:${limit}`;
+    const cachedPackages = await getCache(cacheKey);
+    
+    if (cachedPackages) {
+      res.status(200).json(cachedPackages);
+      return;
+    }
+
+    const [packages, total] = await Promise.all([
+      prisma.tourPackage.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.tourPackage.count()
+    ]);
+    
+    const response = {
+      packages,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+
+    await setCache(cacheKey, response, 300); // Cache for 5 mins
+    
+    res.status(200).json(response);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch packages' });
+    next(new AppError('Failed to fetch packages', 500));
   }
 };
 
-export const getPackageByIdOrSlug = async (req: Request, res: Response): Promise<void> => {
+export const getPackageByIdOrSlug = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const tourPackage = await prisma.tourPackage.findFirst({
@@ -25,17 +57,16 @@ export const getPackageByIdOrSlug = async (req: Request, res: Response): Promise
     });
 
     if (!tourPackage) {
-      res.status(404).json({ message: 'Package not found' });
-      return;
+      return next(new AppError('Package not found', 404));
     }
 
     res.status(200).json(tourPackage);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch package' });
+    next(new AppError('Failed to fetch package', 500));
   }
 };
 
-export const createPackage = async (req: Request, res: Response): Promise<void> => {
+export const createPackage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const data = req.body;
     
@@ -61,13 +92,15 @@ export const createPackage = async (req: Request, res: Response): Promise<void> 
       }
     });
 
+    await invalidateCachePattern('packages:*');
+
     res.status(201).json(newPackage);
   } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to create package' });
+    next(new AppError(error.message || 'Failed to create package', 500));
   }
 };
 
-export const updatePackage = async (req: Request, res: Response): Promise<void> => {
+export const updatePackage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const data = req.body;
@@ -83,20 +116,23 @@ export const updatePackage = async (req: Request, res: Response): Promise<void> 
       }
     });
 
+    await invalidateCachePattern('packages:*');
+
     res.status(200).json(updatedPackage);
   } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Failed to update package' });
+    next(new AppError(error.message || 'Failed to update package', 500));
   }
 };
 
-export const deletePackage = async (req: Request, res: Response): Promise<void> => {
+export const deletePackage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     await prisma.tourPackage.delete({
       where: { id }
     });
+    await invalidateCachePattern('packages:*');
     res.status(200).json({ message: 'Package deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete package' });
+    next(new AppError('Failed to delete package', 500));
   }
 };
