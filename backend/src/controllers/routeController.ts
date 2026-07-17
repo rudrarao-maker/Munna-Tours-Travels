@@ -95,3 +95,51 @@ export const updateRoute = async (req: Request, res: Response): Promise<void> =>
 export const seedRoutes = async (req: Request, res: Response) => {
   res.json({ message: 'Use Prisma seed script to seed database.' });
 };
+
+export const getDynamicPrice = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { date } = req.query;
+    const routeId = req.params.id;
+
+    if (!date || typeof date !== 'string') {
+      res.status(400).json({ message: 'Date query param required' });
+      return;
+    }
+
+    const route = await prisma.route.findUnique({ where: { routeId } });
+    if (!route) {
+      res.status(404).json({ message: 'Route not found' });
+      return;
+    }
+
+    // Calculate how many bookings exist for this route on this date
+    const bookings = await prisma.booking.findMany({
+      where: { routeId: route.id, date }
+    });
+
+    const totalPassengers = bookings.reduce((sum, b) => sum + b.passengers, 0);
+    const busCapacity = 40; // Assuming standard Volvo capacity
+
+    let currentPrice = parseFloat(route.price.replace(/[^0-9.-]+/g, ""));
+    let dynamicFactor = 1.0;
+
+    // Dynamic Pricing Logic: Increase by 20% if capacity > 80%
+    // Increase by 10% if capacity > 50%
+    if (totalPassengers >= busCapacity * 0.8) {
+      dynamicFactor = 1.20;
+    } else if (totalPassengers >= busCapacity * 0.5) {
+      dynamicFactor = 1.10;
+    }
+
+    const finalPrice = Math.round(currentPrice * dynamicFactor);
+
+    res.json({
+      basePrice: currentPrice,
+      dynamicPrice: finalPrice,
+      factor: dynamicFactor,
+      capacityBooked: Math.min(100, Math.round((totalPassengers / busCapacity) * 100)) + '%'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error calculating dynamic price' });
+  }
+};

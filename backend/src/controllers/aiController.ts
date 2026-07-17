@@ -330,6 +330,61 @@ Only output valid JSON, no markdown.`;
   }
 };
 
+// @desc    Budget Optimizer
+// @route   POST /api/ai/budget-optimizer
+// @access  Public
+export const optimizeBudget = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { destination, maxBudget, travelers, days } = req.body;
+    
+    // Fetch live inventory
+    const routes = await prisma.route.findMany({ where: { to: { contains: destination || '' } }, take: 5 });
+    const hotels = await prisma.hotel.findMany({ where: { location: { contains: destination || '' } }, take: 5 });
+    
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    
+    if (GEMINI_API_KEY) {
+      const prompt = `You are an advanced Budget Optimizer for Munna Tours & Travels. 
+The user wants to travel to ${destination || 'anywhere'} for ${days || 3} days with ${travelers || 2} travelers. 
+Their STRICT maximum total budget is ₹${maxBudget}.
+
+Here is our live inventory:
+Routes: ${JSON.stringify(routes)}
+Hotels: ${JSON.stringify(hotels)}
+
+Find the best combination of Route + Hotel that stays UNDER the ₹${maxBudget} budget limit for the entire trip (including all travelers and days).
+Return a strictly formatted JSON object:
+{
+  "recommendedRouteId": "route_id_here",
+  "recommendedHotelId": "hotel_id_here",
+  "totalCost": "₹XX,XXX",
+  "remainingBudget": "₹XX,XXX",
+  "rationale": "A friendly explanation of why this combo fits their budget."
+}
+Only output valid JSON, no markdown fences.`;
+
+      const aiRes = await axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        { contents: [{ parts: [{ text: prompt }] }] }
+      );
+
+      const aiText = aiRes.data.candidates[0].content.parts[0].text;
+      const cleanJson = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      res.json(JSON.parse(cleanJson));
+    } else {
+       res.json({
+         recommendedRouteId: routes[0]?.id || null,
+         recommendedHotelId: hotels[0]?.id || null,
+         totalCost: `₹${maxBudget - 1000}`,
+         remainingBudget: '₹1,000',
+         rationale: 'Mock budget optimization since Gemini is disabled.'
+       });
+    }
+  } catch (error: any) {
+    res.status(500).json({ message: 'Budget optimization failed', error: error.message });
+  }
+};
+
 // ─── HELPERS ─────────────────────────────────────────────────────
 
 function getSmartFallbackReply(message: string): string {

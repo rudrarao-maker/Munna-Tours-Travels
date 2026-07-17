@@ -9,6 +9,7 @@ import { Server } from 'socket.io';
 // Middlewares
 import { generalLimiter, authLimiter, paymentLimiter } from './middlewares/rateLimiter';
 import { errorHandler } from './middlewares/errorHandler';
+import { auditLog } from './middlewares/auditMiddleware';
 
 // Config
 import { initRedis } from './config/redis';
@@ -43,8 +44,8 @@ import packageRoutes from './routes/packageRoutes';
 dotenv.config();
 
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
+export const httpServer = createServer(app);
+export const io = new Server(httpServer, {
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
     methods: ['GET', 'POST']
@@ -59,6 +60,8 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(auditLog());
 app.use(generalLimiter); // Apply general rate limiting to all routes
 
 // Serve static uploads

@@ -19,6 +19,8 @@ model User {
   role              String         @default("customer") // customer, admin, driver, manager
   profileComplete   Boolean        @default(false)
   notificationPrefs String         @default("{\"email\":true,\"sms\":false,\"push\":true}") // JSON string
+  isTwoFactorEnabled Boolean       @default(false)
+  twoFactorSecret   String?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   bookings          Booking[]
@@ -28,6 +30,7 @@ model User {
   tripPlans         TripPlan[]
   chatMessages      ChatMessage[]
   wishlists         Wishlist[]
+  auditLogs         AuditLog[]
 }
 
 model Route {
@@ -225,7 +228,19 @@ model Invoice {
   generatedAt   DateTime @default(now())
 }
 
-// ─── NOTIFICATION & FEEDBACK ─────────────────────────────────────
+// ─── AUDIT & NOTIFICATION ─────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // POST, PUT, DELETE, LOGIN, LOGOUT
+  entity    String   // User, Booking, Vehicle, etc.
+  entityId  String?  // ID of the affected entity
+  details   String   @default("{}") // JSON details of the action
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
 
 model Notification {
   id        String    @id @default(uuid())

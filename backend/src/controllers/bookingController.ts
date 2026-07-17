@@ -4,6 +4,7 @@ import { generateAndSendPDF } from '../utils/emailService';
 import { generateTicketPDF } from '../utils/pdfGenerator';
 import { AppError } from '../utils/AppError';
 import { emailQueue } from '../utils/queue';
+import { io } from '../server';
 
 const prisma = new PrismaClient();
 
@@ -97,6 +98,10 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
       await emailQueue.add('sendBookingConfirmation', { booking, userEmail });
     }
 
+    // Emit real-time events for live seat availability
+    io.emit('booking_created', { bookingId: booking.id, routeId: booking.routeId });
+    io.emit('seat_locked', { routeId: booking.routeId, passengers: booking.passengers, date: booking.date });
+
     res.status(201).json(booking);
   } catch (error: any) {
     next(new AppError('Error creating booking', 500));
@@ -113,6 +118,10 @@ export const updateBookingStatus = async (req: Request, res: Response, next: Nex
       where: { id: (req.params.id as string) },
       data: { status, paymentStatus }
     });
+    
+    // Emit booking update
+    io.emit('booking_updated', { bookingId: booking.id, status, paymentStatus });
+    
     res.json(booking);
   } catch (error: any) {
     next(new AppError('Error updating booking', 500));
