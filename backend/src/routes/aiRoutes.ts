@@ -1,9 +1,13 @@
-import express from 'express';
-import { generateTripPlan } from '../controllers/aiController';
+import { Router } from 'express';
+import { generateTripPlan, chatWithAI, optimizeRoute, getSavedTripPlans, getChatHistory } from '../controllers/aiController';
+import { protect, authorize, optionalAuth } from '../middlewares/authMiddleware';
 
-const router = express.Router();
+const router = Router();
 
-router.route('/trip-plan')
-  .post(generateTripPlan);
+router.post('/trip-plan', optionalAuth, generateTripPlan);
+router.post('/chat', optionalAuth, chatWithAI);
+router.post('/optimize-route', protect, authorize('admin', 'manager'), optimizeRoute);
+router.get('/trip-plans', protect, getSavedTripPlans);
+router.get('/chat/:sessionId', getChatHistory);
 
 export default router;

@@ -35,16 +35,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row pt-20">
+    <div className="min-h-screen flex flex-col md:flex-row pt-20" style={{ backgroundColor: 'var(--background)' }}>
       {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-white border-r border-gray-200 px-4 py-8 flex flex-col min-h-[calc(100vh-5rem)]">
+      <aside className="w-full md:w-64 px-4 py-8 flex flex-col min-h-[calc(100vh-5rem)] border-r"
+             style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
         <div className="flex items-center gap-3 px-4 mb-8">
-          <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center justify-center shadow-md">
             <User size={24} />
           </div>
           <div>
-            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Welcome back,</p>
-            <h2 className="text-lg font-black text-black">{userName}</h2>
+            <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Welcome back,</p>
+            <h2 className="text-lg font-black" style={{ color: 'var(--foreground)' }}>{userName}</h2>
           </div>
         </div>
 
@@ -58,9 +59,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold ${
                   isActive 
-                    ? 'bg-black text-white shadow-md' 
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-black'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' 
+                    : 'hover:bg-black/5 dark:hover:bg-white/10'
                 }`}
+                style={{ color: isActive ? '' : 'var(--muted)' }}
               >
                 <Icon size={20} />
                 {item.name}
@@ -69,10 +71,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <div className="pt-4 mt-4 border-t border-gray-100">
+        <div className="pt-4 mt-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-50 transition-colors font-bold"
+            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-500/10 transition-colors font-bold"
           >
             <LogOut size={20} />
             Sign Out

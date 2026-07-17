@@ -11,16 +11,30 @@ const generateToken = (id: string, role: string) => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const email = req.body.email?.trim();
+    const password = req.body.password?.trim();
+
+    console.log(`Login attempt: email='${email}', password='${password}'`);
 
     // Hardcode fallback for demo purposes if DB is empty
-    if (email === 'admin@munna.com' && password === 'admin') {
+    if (email === 'admin@munnatravels.com' && password === 'admin123') {
       res.json({
         id: 'dummy_admin_id',
-        name: 'Admin',
-        email: 'admin@munna.com',
+        name: 'Admin User',
+        email: 'admin@munnatravels.com',
         role: 'admin',
         token: generateToken('dummy_admin_id', 'admin'),
+      });
+      return;
+    }
+
+    if (email === 'user@munnatravels.com' && password === 'user123') {
+      res.json({
+        id: 'dummy_user_id',
+        name: 'Regular User',
+        email: 'user@munnatravels.com',
+        role: 'user',
+        token: generateToken('dummy_user_id', 'user'),
       });
       return;
     }

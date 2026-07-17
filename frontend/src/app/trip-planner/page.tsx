@@ -1,237 +1,180 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, MapPin, Calendar, Users, Wallet, Compass, Clock, Lightbulb, Loader2, ArrowRight } from 'lucide-react';
+import { Bot, Map, Calendar, Users, Sparkles, Navigation, List } from 'lucide-react';
 import axios from '@/lib/axios';
 
-type Activity = { time: string; activity: string; location: string };
-type DayPlan = { day: number; title: string; activities: Activity[] };
-type TripPlan = {
-  title: string;
-  summary: string;
-  days: DayPlan[];
-  estimatedCost: string;
-  tips: string[];
-};
-
 export default function TripPlannerPage() {
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     destination: '',
     days: '3',
-    travelers: '4',
-    interests: '',
-    budget: 'moderate',
+    travelers: '5',
+    interests: 'sightseeing, food, history'
   });
-  const [plan, setPlan] = useState<TripPlan | null>(null);
   const [loading, setLoading] = useState(false);
+  const [itinerary, setItinerary] = useState<any>(null);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setPlan(null);
     try {
-      const res = await axios.post('/ai/trip-plan', form);
-      setPlan(res.data);
-    } catch (err) {
-      console.error('Failed to generate trip plan', err);
+      const res = await axios.post('/ai/trip-plan', formData);
+      setItinerary(res.data.days || res.data);
+    } catch (error) {
+      console.error('Failed to generate itinerary:', error);
+      alert('Failed to generate itinerary. Using mock data for demo.');
+      
+      // Fallback Mock Data
+      setItinerary([
+        {
+          day: 1,
+          title: "Arrival and Local Culture",
+          activities: [
+            { time: "09:00 AM", description: "Arrive via Munna Travels Premium Coach" },
+            { time: "12:00 PM", description: "Check-in and Authentic Local Lunch" },
+            { time: "04:00 PM", description: "Heritage Walk in the Old City" }
+          ]
+        },
+        {
+          day: 2,
+          title: "Monuments & Museums",
+          activities: [
+            { time: "10:00 AM", description: "Visit the Grand Palace" },
+            { time: "02:00 PM", description: "Guided Museum Tour" },
+            { time: "07:00 PM", description: "Dinner at a Rooftop Restaurant" }
+          ]
+        }
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col bg-gray-50 min-h-screen pt-24">
-      {/* Hero */}
-      <div className="bg-black text-white py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-purple-500 rounded-full blur-[120px]" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-blue-500 rounded-full blur-[120px]" />
-        </div>
-        <div className="container mx-auto px-4 max-w-5xl relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <Sparkles size={24} />
-            </div>
-            <span className="text-sm font-bold text-purple-300 uppercase tracking-wider">AI Powered</span>
+    <div className="flex flex-col min-h-screen pt-24" style={{ backgroundColor: 'var(--background)' }}>
+      <div className="container mx-auto px-4 max-w-5xl py-12">
+        <div className="text-center mb-12">
+          <div className="w-16 h-16 mx-auto bg-black text-white dark:bg-white dark:text-black rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+            <Bot size={32} />
           </div>
-          <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight">AI Trip Planner</h1>
-          <p className="text-xl text-white/60 font-medium max-w-2xl">
-            Tell us where you want to go, and our AI will craft the perfect day-by-day itinerary for your group trip.
-          </p>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4" style={{ color: 'var(--foreground)' }}>AI Trip Planner</h1>
+          <p className="text-xl font-medium max-w-2xl mx-auto" style={{ color: 'var(--muted)' }}>Let our AI generate a personalized daily itinerary for your next group trip.</p>
         </div>
-      </div>
 
-      {/* Form */}
-      <section className="py-12">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <form onSubmit={handleGenerate} className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 md:p-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-bold text-gray-600 uppercase mb-2">Destination</label>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    required type="text" placeholder="e.g. Goa, Manali, Varanasi"
-                    value={form.destination} onChange={e => setForm({ ...form, destination: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 pl-12 pr-4 font-bold text-black focus:border-black focus:ring-1 focus:ring-black outline-none transition"
-                  />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Planner Form */}
+          <div className="lg:col-span-5">
+            <div className="p-8 rounded-3xl border shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky top-32"
+                 style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+              <h2 className="text-2xl font-black mb-6" style={{ color: 'var(--foreground)' }}>Trip Details</h2>
+              <form onSubmit={handleGenerate} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--muted)' }}>Destination</label>
+                  <div className="relative">
+                    <Map className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input required type="text" value={formData.destination} onChange={e => setFormData({...formData, destination: e.target.value})} 
+                           placeholder="e.g. Udaipur, Rajasthan" 
+                           className="w-full rounded-xl py-4 pl-12 pr-4 font-bold outline-none border border-transparent focus:border-black dark:focus:border-white transition-colors"
+                           style={{ backgroundColor: 'var(--input-bg)', color: 'var(--foreground)' }} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-600 uppercase mb-2">Number of Days</label>
-                <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                  <select
-                    value={form.days} onChange={e => setForm({ ...form, days: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 pl-12 pr-4 font-bold text-black focus:border-black focus:ring-1 focus:ring-black outline-none transition appearance-none"
-                  >
-                    {[1, 2, 3, 4, 5, 6, 7].map(d => <option key={d} value={d}>{d} {d === 1 ? 'Day' : 'Days'}</option>)}
-                  </select>
+                <div>
+                  <label className="block text-sm font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--muted)' }}>Duration (Days)</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input required type="number" min="1" max="14" value={formData.days} onChange={e => setFormData({...formData, days: e.target.value})} 
+                           className="w-full rounded-xl py-4 pl-12 pr-4 font-bold outline-none border border-transparent focus:border-black dark:focus:border-white transition-colors"
+                           style={{ backgroundColor: 'var(--input-bg)', color: 'var(--foreground)' }} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-600 uppercase mb-2">Travelers</label>
-                <div className="relative">
-                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                  <input
-                    type="text" placeholder="e.g. 4 friends, family of 6"
-                    value={form.travelers} onChange={e => setForm({ ...form, travelers: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 pl-12 pr-4 font-bold text-black focus:border-black focus:ring-1 focus:ring-black outline-none transition"
-                  />
+                <div>
+                  <label className="block text-sm font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--muted)' }}>Group Size</label>
+                  <div className="relative">
+                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input required type="number" min="1" value={formData.travelers} onChange={e => setFormData({...formData, travelers: e.target.value})} 
+                           className="w-full rounded-xl py-4 pl-12 pr-4 font-bold outline-none border border-transparent focus:border-black dark:focus:border-white transition-colors"
+                           style={{ backgroundColor: 'var(--input-bg)', color: 'var(--foreground)' }} />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-600 uppercase mb-2">Budget Level</label>
-                <div className="relative">
-                  <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                  <select
-                    value={form.budget} onChange={e => setForm({ ...form, budget: e.target.value })}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 pl-12 pr-4 font-bold text-black focus:border-black focus:ring-1 focus:ring-black outline-none transition appearance-none"
-                  >
-                    <option value="budget">Budget Friendly</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="luxury">Luxury</option>
-                  </select>
+                <div>
+                  <label className="block text-sm font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--muted)' }}>Interests (Comma separated)</label>
+                  <textarea rows={2} value={formData.interests} onChange={e => setFormData({...formData, interests: e.target.value})} 
+                            placeholder="e.g. History, Food, Nightlife" 
+                            className="w-full rounded-xl py-4 px-4 font-bold outline-none border border-transparent focus:border-black dark:focus:border-white transition-colors resize-none"
+                            style={{ backgroundColor: 'var(--input-bg)', color: 'var(--foreground)' }}></textarea>
                 </div>
-              </div>
+                <button type="submit" disabled={loading} 
+                        className="w-full bg-black text-white dark:bg-white dark:text-black py-4 rounded-xl font-black text-lg hover:opacity-90 transition flex items-center justify-center shadow-lg disabled:opacity-50 mt-4">
+                  {loading ? (
+                    <><Sparkles className="animate-pulse mr-2" /> Generating...</>
+                  ) : (
+                    <><Sparkles className="mr-2" /> Generate Itinerary</>
+                  )}
+                </button>
+              </form>
             </div>
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-600 uppercase mb-2">Interests (Optional)</label>
-              <input
-                type="text" placeholder="e.g. temples, beaches, adventure sports, local food, photography"
-                value={form.interests} onChange={e => setForm({ ...form, interests: e.target.value })}
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl py-4 px-4 font-bold text-black focus:border-black focus:ring-1 focus:ring-black outline-none transition"
-              />
-            </div>
-            <button
-              type="submit" disabled={loading}
-              className="w-full bg-black text-white py-4 rounded-xl font-black text-lg hover:bg-gray-800 transition flex items-center justify-center gap-3 shadow-lg disabled:opacity-60"
-            >
-              {loading ? (
-                <><Loader2 size={22} className="animate-spin" /> Generating Your Plan...</>
-              ) : (
-                <><Sparkles size={22} /> Generate AI Trip Plan</>
-              )}
-            </button>
-          </form>
-        </div>
-      </section>
+          </div>
 
-      {/* Results */}
-      <AnimatePresence>
-        {plan && (
-          <motion.section
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="pb-24"
-          >
-            <div className="container mx-auto px-4 max-w-5xl">
-              {/* Header */}
-              <div className="bg-gradient-to-br from-black to-gray-800 text-white rounded-3xl p-8 md:p-10 mb-8 shadow-xl">
-                <div className="flex items-center gap-2 mb-3">
-                  <Compass size={20} className="text-purple-400" />
-                  <span className="text-sm font-bold text-purple-300 uppercase tracking-wider">Your Custom Itinerary</span>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-black mb-2">{plan.title}</h2>
-                <p className="text-white/60 font-medium text-lg">{plan.summary}</p>
-                <div className="mt-6 flex flex-wrap gap-4">
-                  <span className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-bold border border-white/10">
-                    💰 Est. Cost: {plan.estimatedCost}
-                  </span>
-                  <span className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-bold border border-white/10">
-                    📅 {plan.days.length} Days
-                  </span>
-                </div>
-              </div>
-
-              {/* Day-by-Day */}
+          {/* Results Area */}
+          <div className="lg:col-span-7">
+            {itinerary ? (
               <div className="space-y-6">
-                {plan.days.map((day, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.15 }}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-                  >
-                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-                      <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center font-black text-sm">
-                        {day.day}
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-3xl font-black tracking-tight" style={{ color: 'var(--foreground)' }}>Your Custom Itinerary</h2>
+                  <button className="text-sm font-bold flex items-center border px-4 py-2 rounded-lg hover:opacity-80 transition"
+                          style={{ borderColor: 'var(--card-border)', color: 'var(--foreground)', backgroundColor: 'var(--card-bg)' }}>
+                    <List size={16} className="mr-2" /> Save Draft
+                  </button>
+                </div>
+
+                {itinerary.map((day: any, idx: number) => (
+                  <div key={idx} className="p-8 rounded-3xl border shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+                       style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+                    <div className="flex items-center mb-6 pb-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
+                      <div className="w-14 h-14 bg-black text-white dark:bg-white dark:text-black rounded-2xl flex flex-col items-center justify-center mr-4 shrink-0 shadow-md">
+                        <span className="text-xs uppercase font-bold opacity-80">Day</span>
+                        <span className="text-xl font-black leading-none">{day.day}</span>
                       </div>
-                      <h3 className="text-lg font-black text-black">{day.title}</h3>
+                      <h3 className="text-2xl font-black" style={{ color: 'var(--foreground)' }}>{day.title}</h3>
                     </div>
-                    <div className="p-6 space-y-4">
-                      {day.activities.map((act, j) => (
-                        <div key={j} className="flex items-start gap-4">
-                          <div className="flex items-center gap-2 shrink-0 w-24">
-                            <Clock size={14} className="text-gray-400" />
-                            <span className="text-sm font-bold text-gray-500">{act.time}</span>
+                    
+                    <div className="space-y-6">
+                      {day.activities.map((act: any, aIdx: number) => (
+                        <div key={aIdx} className="flex gap-4">
+                          <div className="w-24 shrink-0 text-sm font-bold pt-1" style={{ color: 'var(--muted)' }}>
+                            {act.time}
                           </div>
-                          <div>
-                            <p className="font-bold text-black">{act.activity}</p>
-                            <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
-                              <MapPin size={12} /> {act.location}
-                            </p>
+                          <div className="relative">
+                            {/* Vertical Line */}
+                            {aIdx !== day.activities.length - 1 && (
+                              <div className="absolute left-[11px] top-6 bottom-[-24px] w-0.5" style={{ backgroundColor: 'var(--card-border)' }}></div>
+                            )}
+                            <div className="w-6 h-6 rounded-full border-4 flex items-center justify-center shrink-0 mt-0.5 z-10 relative" 
+                                 style={{ backgroundColor: 'var(--background)', borderColor: 'var(--foreground)' }}>
+                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--foreground)' }}></div>
+                            </div>
+                          </div>
+                          <div className="font-medium pt-0.5" style={{ color: 'var(--foreground)' }}>
+                            {act.description}
                           </div>
                         </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-
-              {/* Tips */}
-              {plan.tips && plan.tips.length > 0 && (
-                <div className="mt-8 bg-amber-50 border border-amber-200 rounded-2xl p-6">
-                  <h3 className="font-black text-black flex items-center gap-2 mb-4">
-                    <Lightbulb size={20} className="text-amber-500" /> Travel Tips
-                  </h3>
-                  <ul className="space-y-2">
-                    {plan.tips.map((tip, i) => (
-                      <li key={i} className="text-sm text-gray-700 font-medium flex items-start gap-2">
-                        <ArrowRight size={14} className="text-amber-500 mt-0.5 shrink-0" /> {tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* CTA */}
-              <div className="mt-8 bg-black text-white rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-xl font-black">Love this plan?</h3>
-                  <p className="text-white/60 font-medium">Book a Munna Travels charter bus for this trip now.</p>
-                </div>
-                <a href="/routes" className="bg-white text-black px-8 py-3 rounded-xl font-black hover:bg-gray-100 transition shrink-0">
-                  Book Now →
-                </a>
+            ) : (
+              <div className="h-full min-h-[400px] border border-dashed rounded-3xl flex flex-col items-center justify-center p-8 text-center"
+                   style={{ borderColor: 'var(--card-border)', backgroundColor: 'var(--card-bg)' }}>
+                <Navigation size={48} className="mb-4 opacity-20" style={{ color: 'var(--foreground)' }} />
+                <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--foreground)' }}>Ready to Plan?</h3>
+                <p className="font-medium max-w-sm" style={{ color: 'var(--muted)' }}>Fill out the details on the left, and our AI will construct the perfect itinerary for your group.</p>
               </div>
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

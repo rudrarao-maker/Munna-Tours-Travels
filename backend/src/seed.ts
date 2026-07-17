@@ -19,6 +19,20 @@ async function main() {
   });
   console.log('Admin user created (admin@munnatravels.com / admin123)');
 
+  const userHashedPassword = await bcrypt.hash('password123', 10);
+  await prisma.user.upsert({
+    where: { email: 'user@example.com' },
+    update: {},
+    create: {
+      email: 'user@example.com',
+      password: userHashedPassword,
+      role: 'customer',
+      name: 'John Doe',
+      phone: '1234567890'
+    },
+  });
+  console.log('Customer user created (user@example.com / password123)');
+
   // Create Routes
   const popularRoutes = [
     { routeId: 'ahmedabad-mumbai', from: 'Ahmedabad', to: 'Mumbai', price: '₹900', time: '8 hrs 30 mins', type: 'Volvo A/C Sleeper', image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?q=80&w=800&auto=format&fit=crop' },
@@ -46,6 +60,90 @@ async function main() {
     });
   }
   console.log('15 Ahmedabad Routes seeded');
+
+  // Generate 100+ Hotels
+  console.log('Seeding 100+ Hotels...');
+  const statesAndCities = [
+    { state: 'Rajasthan', cities: ['Jaipur', 'Udaipur', 'Jodhpur', 'Jaisalmer', 'Mount Abu'] },
+    { state: 'Maharashtra', cities: ['Mumbai', 'Pune', 'Lonavala', 'Mahabaleshwar', 'Aurangabad'] },
+    { state: 'Gujarat', cities: ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhuj'] },
+    { state: 'Kerala', cities: ['Munnar', 'Kochi', 'Alleppey', 'Wayanad', 'Trivandrum'] },
+    { state: 'Uttarakhand', cities: ['Mussoorie', 'Nainital', 'Dehradun', 'Rishikesh', 'Haridwar'] },
+    { state: 'Himachal Pradesh', cities: ['Manali', 'Shimla', 'Dharamshala', 'Dalhousie', 'Kasol'] },
+    { state: 'Goa', cities: ['North Goa', 'South Goa', 'Panaji', 'Vagator'] },
+    { state: 'Karnataka', cities: ['Bangalore', 'Mysore', 'Coorg', 'Chikmagalur'] },
+    { state: 'Tamil Nadu', cities: ['Ooty', 'Kodaikanal', 'Chennai', 'Coimbatore'] },
+    { state: 'West Bengal', cities: ['Darjeeling', 'Kolkata', 'Siliguri'] }
+  ];
+
+  const prefixes = ['The Grand', 'Royal', 'Taj', 'Lemon Tree', 'Radisson', 'ITC', 'Oberoi', 'Trident', 'Novotel', 'Hyatt', 'Marriott', 'Zostel', 'Sterling', 'Club Mahindra'];
+  const suffixes = ['Palace', 'Resort & Spa', 'Hotel', 'Retreat', 'Residency', 'Inn', 'Suites', 'Boutique Hotel'];
+  const types = ['5-Star Hotel', '4-Star Hotel', '3-Star Hotel', 'Resort', 'Boutique Hotel', 'Hostel'];
+  const baseImages = [
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
+    'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800',
+    'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
+    'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800',
+    'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800',
+    'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800',
+    'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=800',
+    'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800'
+  ];
+
+  let hotelCount = 0;
+
+  // Clear existing hotels first to avoid duplicates on re-seed
+  await prisma.hotel.deleteMany({});
+
+  for (const region of statesAndCities) {
+    for (const city of region.cities) {
+      // Create 2 to 4 hotels per city
+      const numHotels = Math.floor(Math.random() * 3) + 2; 
+      
+      for (let i = 0; i < numHotels; i++) {
+        const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+        const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const image = baseImages[Math.floor(Math.random() * baseImages.length)];
+        
+        let starRating = 3;
+        if (type === '5-Star Hotel' || prefix === 'Taj' || prefix === 'Oberoi') starRating = 5;
+        if (type === '4-Star Hotel' || prefix === 'Marriott') starRating = 4;
+        if (type === 'Hostel') starRating = 2;
+
+        let basePrice = 2000;
+        if (starRating === 5) basePrice = 12000 + Math.floor(Math.random() * 8000);
+        if (starRating === 4) basePrice = 6000 + Math.floor(Math.random() * 4000);
+        if (starRating === 3) basePrice = 2500 + Math.floor(Math.random() * 2000);
+        if (starRating === 2) basePrice = 800 + Math.floor(Math.random() * 800);
+
+        await prisma.hotel.create({
+          data: {
+            name: `${prefix} ${city} ${suffix}`,
+            location: `Central ${city}, ${region.state}`,
+            city: city,
+            state: region.state,
+            type: type,
+            description: `Experience the best of ${city} at our premium ${type.toLowerCase()}. Enjoy modern amenities, excellent service, and a memorable stay.`,
+            starRating: starRating,
+            pricePerNight: basePrice,
+            amenities: JSON.stringify(['WiFi', 'AC', 'Restaurant', 'Room Service', 'TV', starRating > 3 ? 'Pool' : '', starRating === 5 ? 'Spa' : ''].filter(Boolean)),
+            images: JSON.stringify([image]),
+            contactPhone: `+91 ${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+            contactEmail: `info@${prefix.toLowerCase().replace(/ /g, '')}${city.toLowerCase()}.com`,
+            latitude: 20 + Math.random() * 10,
+            longitude: 70 + Math.random() * 10,
+            isActive: true,
+            totalRooms: 50 + Math.floor(Math.random() * 100),
+            availableRooms: 10 + Math.floor(Math.random() * 40)
+          }
+        });
+        hotelCount++;
+      }
+    }
+  }
+
+  console.log(`Successfully seeded ${hotelCount} hotels across India!`);
 }
 
 main()

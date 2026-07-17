@@ -1,8 +1,19 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma';
+import { getCache, setCache, invalidateCache } from '../config/redis';
+
+const ROUTES_CACHE_KEY = 'cache:routes:all';
+const ROUTES_CACHE_TTL = 300; // 5 minutes
 
 export const getRoutes = async (req: Request, res: Response) => {
   try {
+    // Try cache first
+    const cached = await getCache(ROUTES_CACHE_KEY);
+    if (cached) {
+      res.json(cached);
+      return;
+    }
+
     const routes = await prisma.route.findMany();
     // Fallback if DB is empty
     if (routes.length === 0) {
@@ -17,6 +28,9 @@ export const getRoutes = async (req: Request, res: Response) => {
       res.json(fallbackRoutes);
       return;
     }
+
+    // Cache the result
+    await setCache(ROUTES_CACHE_KEY, routes, ROUTES_CACHE_TTL);
     res.json(routes);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
@@ -43,6 +57,8 @@ export const createRoute = async (req: Request, res: Response) => {
     const newRoute = await prisma.route.create({
       data: req.body,
     });
+    // Invalidate routes cache on mutation
+    await invalidateCache(ROUTES_CACHE_KEY);
     res.status(201).json(newRoute);
   } catch (error: any) {
     res.status(400).json({ message: 'Invalid data', error: error.message });
@@ -54,6 +70,8 @@ export const deleteRoute = async (req: Request, res: Response): Promise<void> =>
     await prisma.route.delete({
       where: { id: (req.params.id as string) },
     });
+    // Invalidate routes cache on mutation
+    await invalidateCache(ROUTES_CACHE_KEY);
     res.json({ message: 'Route removed' });
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
@@ -66,6 +84,8 @@ export const updateRoute = async (req: Request, res: Response): Promise<void> =>
       where: { id: (req.params.id as string) },
       data: req.body,
     });
+    // Invalidate routes cache on mutation
+    await invalidateCache(ROUTES_CACHE_KEY);
     res.json(updatedRoute);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });

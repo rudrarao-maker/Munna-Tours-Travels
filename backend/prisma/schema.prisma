@@ -7,15 +7,26 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+// ─── CORE MODELS ────────────────────────────────────────────────
+
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  password  String
-  role      String    @default("customer")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  bookings  Booking[]
-  reviews   Review[]
+  id                String         @id @default(uuid())
+  email             String         @unique
+  password          String
+  name              String         @default("")
+  phone             String         @default("")
+  avatar            String         @default("")
+  role              String         @default("customer") // customer, admin, driver, manager
+  profileComplete   Boolean        @default(false)
+  notificationPrefs String         @default("{\"email\":true,\"sms\":false,\"push\":true}") // JSON string
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  bookings          Booking[]
+  reviews           Review[]
+  notifications     Notification[]
+  feedbacks         Feedback[]
+  tripPlans         TripPlan[]
+  chatMessages      ChatMessage[]
 }
 
 model Route {
@@ -27,6 +38,9 @@ model Route {
   time      String
   type      String
   image     String
+  distance  Float     @default(0) // in km
+  stops     String    @default("[]") // JSON array of stop names
+  isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   bookings  Booking[]
@@ -34,27 +48,46 @@ model Route {
 }
 
 model Vehicle {
-  id            String         @id @default(uuid())
-  name          String
-  type          String
-  capacity      Int
-  registration  String         @unique
-  status        String         @default("active") // active, maintenance, retired
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  quoteRequests QuoteRequest[]
+  id              String      @id @default(uuid())
+  name            String
+  type            String
+  capacity        Int
+  registration    String      @unique
+  status          String      @default("active") // active, maintenance, retired
+  currentLat      Float       @default(0)
+  currentLng      Float       @default(0)
+  fuelLevel       Float       @default(100) // percentage
+  lastServiceDate String      @default("")
+  mileage         Float       @default(0) // in km
+  assignedDriverId String?
+  features        String      @default("[]") // JSON array: ["AC", "WiFi", "Charger"]
+  images          String      @default("[]") // JSON array of image URLs
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  quoteRequests   QuoteRequest[]
+  fleetLogs       FleetLog[]
+  driverLocations DriverLocation[]
 }
 
 model Driver {
-  id            String         @id @default(uuid())
-  name          String
-  license       String         @unique
-  phone         String
-  status        String         @default("active") // active, on-leave, inactive
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  quoteRequests QuoteRequest[]
+  id              String           @id @default(uuid())
+  name            String
+  license         String           @unique
+  phone           String
+  email           String           @default("")
+  avatar          String           @default("")
+  status          String           @default("active") // active, on-leave, inactive
+  rating          Float            @default(5.0)
+  totalTrips      Int              @default(0)
+  currentVehicleId String?
+  isOnline        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  quoteRequests   QuoteRequest[]
+  driverLocations DriverLocation[]
 }
+
+// ─── BOOKING & PAYMENT MODELS ───────────────────────────────────
 
 model QuoteRequest {
   id            String   @id @default(uuid())
@@ -82,19 +115,183 @@ model QuoteRequest {
 }
 
 model Booking {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   userId        String?
-  user          User?    @relation(fields: [userId], references: [id])
+  user          User?     @relation(fields: [userId], references: [id])
   routeId       String
-  route         Route    @relation(fields: [routeId], references: [id])
+  route         Route     @relation(fields: [routeId], references: [id])
+  vehicleType   String    @default("volvo bus")
+  mealPlan      String    @default("none")
+  hotelId       String?
+  hotel         Hotel?    @relation(fields: [hotelId], references: [id])
   date          String
   passengers    Int
-  totalPrice    String
-  status        String   @default("Confirmed") // Confirmed, Cancelled, Completed
-  paymentStatus String   @default("Pending") // Pending, Paid
+  basePrice     Float     @default(0)
+  vehiclePrice  Float     @default(0)
+  mealPrice     Float     @default(0)
+  hotelPrice    Float     @default(0)
+  taxes         Float     @default(0)
+  totalPrice    Float     @default(0)
+  status        String    @default("Confirmed") // Confirmed, Cancelled, Completed
+  paymentStatus String    @default("Pending") // Pending, Paid, Refunded
+  paymentId     String?   // Razorpay payment ID
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  eTicket       ETicket?
+  invoice       Invoice?
+  feedback      Feedback?
+}
+
+// ─── HOTEL & PACKAGE MODELS ─────────────────────────────────────
+
+model Hotel {
+  id            String   @id @default(uuid())
+  name          String
+  location      String
+  city          String   @default("")
+  state         String   @default("Gujarat")
+  type          String   @default("3-Star Hotel") // 3-Star Hotel, 5-Star Hotel, Resort
+  description   String   @default("")
+  starRating    Int      @default(3) // 1-5
+  pricePerNight Float    @default(0)
+  amenities     String   @default("[]") // JSON array: ["WiFi","Pool","Spa"]
+  images        String   @default("[]") // JSON array of URLs
+  contactPhone  String   @default("")
+  contactEmail  String   @default("")
+  latitude      Float    @default(0)
+  longitude     Float    @default(0)
+  isActive      Boolean  @default(true)
+  totalRooms    Int      @default(10)
+  availableRooms Int     @default(10)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  bookings      Booking[]
 }
+
+// ─── E-TICKET & INVOICE ─────────────────────────────────────────
+
+model ETicket {
+  id           String    @id @default(uuid())
+  bookingId    String    @unique
+  booking      Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  ticketNumber String    @unique
+  qrCodeData   String    // Encoded QR data
+  validFrom    String
+  validTo      String
+  boardingPoint String   @default("")
+  seatNumbers  String    @default("") // comma-separated
+  scannedAt    DateTime?
+  isScanned    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  invoiceNumber String   @unique
+  items         String   @default("[]") // JSON array of line items
+  subtotal      Float    @default(0)
+  tax           Float    @default(0)
+  discount      Float    @default(0)
+  total         Float    @default(0)
+  pdfUrl        String   @default("")
+  status        String   @default("generated") // generated, sent, paid
+  generatedAt   DateTime @default(now())
+}
+
+// ─── NOTIFICATION & FEEDBACK ─────────────────────────────────────
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String    @default("info") // info, booking, payment, promo, alert
+  channel   String    @default("email") // email, sms, push, in-app
+  title     String
+  message   String
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  metadata  String    @default("{}") // JSON for extra data
+  createdAt DateTime  @default(now())
+}
+
+model Feedback {
+  id             String   @id @default(uuid())
+  bookingId      String   @unique
+  booking        Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating         Int      // 1-5
+  comment        String   @default("")
+  sentimentScore Float    @default(0) // -1.0 to 1.0
+  sentimentLabel String   @default("neutral") // positive, neutral, negative
+  categories     String   @default("[]") // JSON: ["cleanliness","punctuality","comfort"]
+  adminResponse  String   @default("")
+  analyzedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ─── FLEET MANAGEMENT ────────────────────────────────────────────
+
+model FleetLog {
+  id          String   @id @default(uuid())
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  type        String   // maintenance, fuel, inspection, repair, accident
+  description String   @default("")
+  cost        Float    @default(0)
+  odometerKm  Float    @default(0)
+  performedBy String   @default("")
+  date        String
+  nextDueDate String?
+  createdAt   DateTime @default(now())
+}
+
+model DriverLocation {
+  id        String   @id @default(uuid())
+  driverId  String
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+  latitude  Float
+  longitude Float
+  heading   Float    @default(0) // compass direction
+  speed     Float    @default(0) // km/h
+  accuracy  Float    @default(0) // meters
+  timestamp DateTime @default(now())
+}
+
+// ─── AI & CHAT ───────────────────────────────────────────────────
+
+model TripPlan {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  destination String
+  days        Int
+  travelers   String   @default("2")
+  interests   String   @default("")
+  budget      String   @default("moderate")
+  plan        String   @default("{}") // JSON of generated plan
+  aiModel     String   @default("gemini") // gemini, openai, fallback
+  isSaved     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  sessionId String   // Group messages by session
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  role      String   // user, assistant, system
+  content   String
+  metadata  String   @default("{}") // JSON for extra context
+  createdAt DateTime @default(now())
+}
+
+// ─── EXISTING MODELS (PRESERVED) ────────────────────────────────
 
 model Review {
   id        String   @id @default(uuid())
@@ -107,4 +304,36 @@ model Review {
   status    String   @default("Pending") // Pending, Approved, Rejected
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Coupon {
+  id         String   @id @default(uuid())
+  code       String   @unique
+  discount   Float    // amount off (percentage or flat)
+  type       String   @default("percentage") // percentage, flat
+  maxUses    Int      @default(100)
+  usedCount  Int      @default(0)
+  minAmount  Float    @default(0) // minimum booking amount to apply
+  validFrom  DateTime @default(now())
+  validUntil DateTime
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ─── BLOGS ──────────────────────────────────────────────────────
+
+model Blog {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  content     String
+  excerpt     String   @default("")
+  author      String   @default("Admin")
+  coverImage  String   @default("")
+  tags        String   @default("[]")
+  status      String   @default("published")
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

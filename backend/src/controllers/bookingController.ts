@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { generateAndSendPDF } from '../utils/emailService';
+import { generateTicketPDF } from '../utils/pdfGenerator';
 
 const prisma = new PrismaClient();
 
@@ -13,6 +14,7 @@ export const getBookings = async (req: Request, res: Response) => {
       include: {
         route: true,
         user: true,
+        hotel: true,
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -29,7 +31,7 @@ export const getBookingById = async (req: Request, res: Response) => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: (req.params.id as string) },
-      include: { route: true, user: true }
+      include: { route: true, user: true, hotel: true }
     });
     if (booking) {
       res.json(booking);
@@ -46,14 +48,27 @@ export const getBookingById = async (req: Request, res: Response) => {
 // @access  Public/Private
 export const createBooking = async (req: Request, res: Response) => {
   try {
-    const { routeId, date, passengers, totalPrice, userId, userEmail } = req.body;
+    const { 
+      routeId, date, passengers, userId, userEmail,
+      vehicleType, mealPlan, hotelId, 
+      basePrice, vehiclePrice, mealPrice, hotelPrice, taxes, totalPrice 
+    } = req.body;
+    
     const booking = await prisma.booking.create({
       data: {
         routeId,
         date,
         passengers: parseInt(passengers),
-        totalPrice: totalPrice.toString(),
-        userId
+        userId,
+        vehicleType: vehicleType || 'volvo bus',
+        mealPlan: mealPlan || 'none',
+        hotelId: hotelId || null,
+        basePrice: parseFloat(basePrice) || 0,
+        vehiclePrice: parseFloat(vehiclePrice) || 0,
+        mealPrice: parseFloat(mealPrice) || 0,
+        hotelPrice: parseFloat(hotelPrice) || 0,
+        taxes: parseFloat(taxes) || 0,
+        totalPrice: parseFloat(totalPrice) || 0,
       }
     });
 
@@ -81,5 +96,84 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
     res.json(booking);
   } catch (error: any) {
     res.status(500).json({ message: 'Error updating booking', error: error.message });
+  }
+};
+
+// @desc    Download e-ticket PDF for a booking
+// @route   GET /api/bookings/:id/ticket
+// @access  Public
+export const downloadTicket = async (req: Request, res: Response) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: (req.params.id as string) },
+      include: { route: true, user: true, hotel: true }
+    });
+
+    if (!booking) {
+      res.status(404).json({ message: 'Booking not found' });
+      return;
+    }
+
+    const pdfBuffer = await generateTicketPDF(booking);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=MunnaTravels_Ticket_${booking.id.slice(0, 8)}.pdf`,
+      'Content-Length': pdfBuffer.length.toString(),
+    });
+
+    res.send(pdfBuffer);
+  } catch (error: any) {
+    console.error('Error generating ticket PDF:', error);
+    res.status(500).json({ message: 'Error generating ticket', error: error.message });
+  }
+};
+
+// @desc    Cancel a booking
+// @route   PUT /api/bookings/:id/cancel
+// @access  Public (should ideally be protected, but keeping public for demo)
+export const cancelBooking = async (req: Request, res: Response) => {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: (req.params.id as string) },
+    });
+
+    if (!booking) {
+      res.status(404).json({ message: 'Booking not found' });
+      return;
+    }
+
+    if (booking.status === 'Cancelled') {
+      res.status(400).json({ message: 'Booking is already cancelled' });
+      return;
+    }
+
+    const departureDate = new Date(booking.date);
+    const now = new Date();
+    const hoursToDeparture = (departureDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    let refundAmount = 0;
+    const totalPrice = booking.totalPrice || 0;
+
+    if (hoursToDeparture > 24) {
+      refundAmount = totalPrice; // Full refund
+    } else if (hoursToDeparture > 0 && hoursToDeparture <= 24) {
+      refundAmount = totalPrice * 0.5; // 50% refund
+    } else {
+      refundAmount = 0; // No refund if already departed or negative
+    }
+
+    const updatedBooking = await prisma.booking.update({
+      where: { id: booking.id },
+      data: { status: 'Cancelled' },
+    });
+
+    res.json({
+      message: 'Booking cancelled successfully',
+      refundAmount,
+      booking: updatedBooking
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error cancelling booking', error: error.message });
   }
 };

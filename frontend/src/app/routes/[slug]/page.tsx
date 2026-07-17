@@ -55,6 +55,14 @@ export default function QuoteRequestPage() {
     fetchRoute();
   }, [slug]);
 
+  // Load Razorpay Script (Must be above early returns to obey Rules of Hooks)
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-24"><p className="text-xl font-bold">Loading route details...</p></div>;
   }
@@ -70,14 +78,6 @@ export default function QuoteRequestPage() {
       </div>
     );
   }
-
-  // Load Razorpay Script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,60 +181,123 @@ export default function QuoteRequestPage() {
         <div className="bg-white rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
           
           {/* Header Banner */}
-          <div className="h-64 relative">
+          <div className="h-[400px] relative">
             <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${route.image}')` }} />
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-6">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <div className="absolute inset-0 flex flex-col justify-end items-start text-left p-8 md:p-12">
               <span className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-xs font-bold uppercase tracking-widest border border-white/30 mb-4">
-                Charter Booking Request
+                Premium Route
               </span>
-              <h1 className="text-4xl md:text-5xl font-black text-white flex items-center gap-4">
-                {route.from} <ArrowRight size={32} className="text-gray-300" /> {route.to}
+              <h1 className="text-4xl md:text-6xl font-black text-white flex items-center gap-4 mb-2">
+                {route.from} <ArrowRight size={32} className="text-gray-300 hidden md:block" /> {route.to}
               </h1>
-              <p className="text-gray-300 font-medium mt-4 max-w-xl">
-                Fill out the details below to receive a personalized quote for your group trip.
+              <p className="text-gray-200 font-medium max-w-2xl mb-8 text-lg">
+                Experience luxury and comfort on our charter route. Flexible timings, premium amenities, and top-rated drivers.
               </p>
+              <button onClick={() => document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' })} 
+                      className="bg-white text-black px-8 py-3 rounded-xl font-black hover:bg-gray-100 transition shadow-lg">
+                Book This Route
+              </button>
             </div>
           </div>
 
           <div className="p-8 md:p-12">
             
             {/* Quick Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <MapPin className="mx-auto text-gray-400 mb-2" size={24} />
-                <p className="text-xs font-bold text-gray-500 uppercase">Distance</p>
+                <p className="text-xs font-bold text-gray-500 uppercase">Duration</p>
                 <p className="font-black text-black">{route.time}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <Bus className="mx-auto text-gray-400 mb-2" size={24} />
-                <p className="text-xs font-bold text-gray-500 uppercase">Standard Fleet</p>
+                <p className="text-xs font-bold text-gray-500 uppercase">Fleet Type</p>
                 <p className="font-black text-black truncate">{route.type}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <Users className="mx-auto text-gray-400 mb-2" size={24} />
-                <p className="text-xs font-bold text-gray-500 uppercase">Min Capacity</p>
-                <p className="font-black text-black">15 Persons</p>
+                <p className="text-xs font-bold text-gray-500 uppercase">Capacity</p>
+                <p className="font-black text-black">15 - 50 Seats</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-center">
                 <Clock className="mx-auto text-gray-400 mb-2" size={24} />
-                <p className="text-xs font-bold text-gray-500 uppercase">Est. Starting Price</p>
-                <p className="font-black text-green-600">{route.price}/seat</p>
+                <p className="text-xs font-bold text-gray-500 uppercase">Starting Price</p>
+                <p className="font-black text-green-600">{route.price}</p>
               </div>
             </div>
 
-            {/* Google Maps Embed */}
-            <div className="mb-8 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-              <iframe
-                title="Route Map"
-                width="100%"
-                height="300"
-                style={{ border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                src={`https://www.google.com/maps/embed/v1/directions?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'}&origin=${encodeURIComponent(route.from)}&destination=${encodeURIComponent(route.to)}&mode=driving`}
-              />
+            {/* Route Details Section */}
+            <div className="mb-12 space-y-8">
+              <h2 className="text-3xl font-black text-black pb-4 border-b border-gray-100">Route Details</h2>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left Col: Map and Points */}
+                <div className="space-y-6">
+                  {/* Google Maps Embed */}
+                  <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                    <iframe
+                      title="Route Map"
+                      width="100%"
+                      height="300"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.google.com/maps/embed/v1/directions?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || 'AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8'}&origin=${encodeURIComponent(route.from)}&destination=${encodeURIComponent(route.to)}&mode=driving`}
+                    />
+                  </div>
+
+                  <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                    <h3 className="font-black text-lg mb-4 flex items-center gap-2"><MapPin size={20} className="text-black" /> Boarding & Dropping</h3>
+                    <div className="relative pl-6 space-y-6">
+                      <div className="absolute left-[9px] top-2 bottom-2 w-0.5 bg-gray-200"></div>
+                      
+                      <div className="relative">
+                        <div className="absolute -left-[29px] top-1 w-4 h-4 bg-black rounded-full border-4 border-gray-50"></div>
+                        <h4 className="font-bold text-black">{route.from} (Main Terminal)</h4>
+                        <p className="text-sm text-gray-500 font-medium">Multiple pickup points available in the city area upon request.</p>
+                      </div>
+
+                      <div className="relative">
+                        <div className="absolute -left-[29px] top-1 w-4 h-4 bg-white border-4 border-black rounded-full"></div>
+                        <h4 className="font-bold text-black">{route.to} (Central Bus Stand)</h4>
+                        <p className="text-sm text-gray-500 font-medium">Drop-off locations can be customized for charter bookings.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Col: Amenities & Schedule */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-black text-lg mb-4">Onboard Amenities</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {['AC / Climate Control', 'Reclining Seats', 'GPS Tracking', 'USB Charging', 'Reading Lights', 'Bottled Water'].map((amenity, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-white shadow-sm">
+                          <CheckCircle2 size={16} className="text-green-500" />
+                          <span className="font-bold text-sm text-gray-700">{amenity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+                    <h3 className="font-black text-lg mb-4 flex items-center gap-2 text-blue-900"><Clock size={20} /> Schedule & Timings</h3>
+                    <p className="text-sm text-blue-800 font-medium leading-relaxed mb-4">
+                      This is a dynamic route available for <strong>private charter</strong> and <strong>scheduled group bookings</strong>. Travel time is approximately <strong>{route.time}</strong> depending on traffic conditions.
+                    </p>
+                    <ul className="space-y-2 text-sm text-blue-800 font-medium list-disc pl-4">
+                      <li>Flexible departure times for full charter.</li>
+                      <li>Standard scheduled departures: 08:00 AM, 10:00 PM.</li>
+                      <li>Rest stops every 3-4 hours.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            {/* Booking Form Title */}
+            <h2 className="text-3xl font-black text-black pb-4 border-b border-gray-100 mb-8 mt-16" id="booking-form">Request a Quote</h2>
 
             {/* WhatsApp Booking CTA */}
             <div className="mb-12 bg-green-50 border border-green-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">

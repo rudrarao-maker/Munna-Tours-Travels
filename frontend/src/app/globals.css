@@ -3,6 +3,37 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --card-bg: #ffffff;
+  --card-border: #f3f4f6;
+  --muted: #6b7280;
+  --muted-light: #9ca3af;
+  --section-alt: #f9fafb;
+  --input-bg: #f9fafb;
+  --shadow-card: 0 8px 30px rgb(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 8px 30px rgb(0, 0, 0, 0.12);
+  --nav-bg: rgba(255, 255, 255, 0.9);
+  --nav-border: #f3f4f6;
+  --footer-bg: #111827;
+  --footer-text: #9ca3af;
+  --footer-border: #1f2937;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card-bg: #171717;
+  --card-border: #262626;
+  --muted: #a3a3a3;
+  --muted-light: #737373;
+  --section-alt: #141414;
+  --input-bg: #1a1a1a;
+  --shadow-card: 0 8px 30px rgb(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 8px 30px rgb(0, 0, 0, 0.5);
+  --nav-bg: rgba(10, 10, 10, 0.9);
+  --nav-border: #262626;
+  --footer-bg: #000000;
+  --footer-text: #737373;
+  --footer-border: #171717;
 }
 
 @theme inline {
@@ -12,15 +43,17 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode transitions for smooth toggling */
+.dark-transition,
+.dark-transition *,
+.dark-transition *::before,
+.dark-transition *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
 }
