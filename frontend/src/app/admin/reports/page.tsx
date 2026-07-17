@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Download, Calendar, Filter, FileText, CheckCircle } from 'lucide-react';
 import axios from '@/lib/axios';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function ReportsPage() {
   const [reportType, setReportType] = useState('revenue');
@@ -111,15 +114,34 @@ export default function ReportsPage() {
             </div>
 
             {reportData.routeBreakdown && (
-              <div>
-                <h3 className="font-bold mb-4" style={{ color: 'var(--foreground)' }}>Top Performing Routes</h3>
-                <div className="space-y-3">
-                  {reportData.routeBreakdown.map((r: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-xl border" style={{ borderColor: 'var(--card-border)' }}>
-                      <span className="font-medium" style={{ color: 'var(--foreground)' }}>{r.route}</span>
-                      <span className="font-black text-green-500">₹{r.revenue.toLocaleString()}</span>
-                    </div>
-                  ))}
+              <div className="mt-8 border-t pt-8" style={{ borderColor: 'var(--card-border)' }}>
+                <h3 className="text-xl font-black mb-6" style={{ color: 'var(--foreground)' }}>Revenue Breakdown (Pie Chart)</h3>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={reportData.routeBreakdown}
+                        dataKey="revenue"
+                        nameKey="route"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={60}
+                        paddingAngle={5}
+                        fill="#8884d8"
+                        label
+                      >
+                        {reportData.routeBreakdown.map((entry: any, index: number) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', borderRadius: '12px', color: 'var(--foreground)' }}
+                        formatter={(value: any) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             )}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Star, Filter, Wifi, Waves, Utensils, Dumbbell, Sparkles, ChevronDown, Phone, Mail } from 'lucide-react';
 import axios from '@/lib/axios';
+import WishlistButton from '@/components/WishlistButton';
 
 interface Hotel {
   id: string;
@@ -195,10 +196,11 @@ export default function HotelsPage() {
                       alt={hotel.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute top-4 right-4 px-3 py-1.5 rounded-xl backdrop-blur-md text-sm font-black"
+                    <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl backdrop-blur-md text-sm font-black z-10"
                       style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff' }}>
                       {'★'.repeat(hotel.starRating)}
                     </div>
+                    <WishlistButton itemType="hotel" itemId={hotel.id} />
                     <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-xl backdrop-blur-md text-sm font-bold"
                       style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#10b981' }}>
                       {hotel.availableRooms} rooms available

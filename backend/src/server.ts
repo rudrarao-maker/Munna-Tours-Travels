@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import { createServer } from 'http';
@@ -34,6 +35,9 @@ import fleetRoutes from './routes/fleetRoutes';
 import trackingRoutes from './routes/trackingRoutes';
 import reportRoutes from './routes/reportRoutes';
 import blogRoutes from './routes/blogRoutes';
+import wishlistRoutes from './routes/wishlistRoutes';
+import uploadRoutes from './routes/uploadRoutes';
+import packageRoutes from './routes/packageRoutes';
 
 dotenv.config();
 
@@ -55,6 +59,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(generalLimiter); // Apply general rate limiting to all routes
+
+// Serve static uploads
+app.use('/uploads', express.static(path.join(__dirname, '../../public/uploads')));
 
 // ─── Socket.io for Real-Time Features ───────────────────────────
 
@@ -145,6 +152,9 @@ app.use('/api/fleet', fleetRoutes);
 app.use('/api/tracking', trackingRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/packages', packageRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

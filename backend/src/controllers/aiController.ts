@@ -257,6 +257,79 @@ export const getChatHistory = async (req: Request, res: Response) => {
   }
 };
 
+// @desc    Get AI Package Recommendations
+// @route   GET /api/ai/recommendations
+// @access  Private
+export const getAIRecommendations = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const authReq = req as AuthRequest;
+    if (!authReq.user?.id) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+    // Fetch user's past bookings to build profile
+    const pastBookings = await prisma.booking.findMany({
+      where: { userId: authReq.user.id },
+      include: { tourPackage: true, route: true },
+      take: 5,
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const userInterests = pastBookings.map(b => 
+      b.tourPackage ? b.tourPackage.destination : b.route?.to
+    ).filter(Boolean).join(', ');
+
+    // Fetch all available packages
+    const allPackages = await prisma.tourPackage.findMany({
+      select: { id: true, title: true, destination: true, category: true, price: true }
+    });
+
+    if (!GEMINI_API_KEY) {
+      // Fallback: just return top 3 packages randomly or based on popularity
+      res.json({ recommendations: allPackages.slice(0, 3), rationale: "Popular choices based on our top destinations." });
+      return;
+    }
+
+    const prompt = `You are an AI travel recommendation engine. 
+The user has previously traveled to: ${userInterests || 'nowhere yet'}.
+Here is a list of our available tour packages in JSON format: 
+${JSON.stringify(allPackages)}
+
+Based on their past travel history (or general popularity if they have no history), recommend EXACTLY 3 packages from the list above. 
+Return a JSON object in this format strictly:
+{
+  "recommendations": ["package_id_1", "package_id_2", "package_id_3"],
+  "rationale": "A friendly 1-2 sentence explanation of why you picked these based on their history."
+}
+Only output valid JSON, no markdown.`;
+
+    const aiRes = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      { contents: [{ parts: [{ text: prompt }] }] }
+    );
+
+    const aiText = aiRes.data.candidates[0].content.parts[0].text;
+    const cleanJson = aiText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const result = JSON.parse(cleanJson);
+
+    // Hydrate the full package details for the recommended IDs
+    const recommendedPackages = await prisma.tourPackage.findMany({
+      where: { id: { in: result.recommendations } }
+    });
+
+    res.json({
+      recommendations: recommendedPackages,
+      rationale: result.rationale
+    });
+  } catch (error: any) {
+    console.error('AI Recommendation Error:', error);
+    res.status(500).json({ message: 'Error generating recommendations', error: error.message });
+  }
+};
+
 // ─── HELPERS ─────────────────────────────────────────────────────
 
 function getSmartFallbackReply(message: string): string {

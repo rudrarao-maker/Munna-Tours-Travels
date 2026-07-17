@@ -24,7 +24,7 @@ export default function AdminSettings() {
             <label className="block text-sm font-bold text-black mb-2">Platform Name</label>
             <input 
               type="text" 
-              defaultValue="Munna Tours & Travels"
+              defaultValue="TripNova Holidays"
               className="w-full px-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition text-black font-bold"
             />
           </div>

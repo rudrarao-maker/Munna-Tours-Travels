@@ -92,7 +92,7 @@ export default function ContactPage() {
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30" />
               <div className="absolute inset-0 flex items-center justify-center flex-col">
                 <div className="bg-white text-black px-6 py-3 rounded-2xl shadow-xl font-black flex items-center text-lg z-10 border border-gray-100">
-                  <MapPin className="mr-2" /> Munna Travels HQ
+                  <MapPin className="mr-2" /> TripNova Holidays HQ
                 </div>
                 <p className="text-white/60 font-bold mt-4 text-sm tracking-widest uppercase">Mumbai Hub</p>
               </div>

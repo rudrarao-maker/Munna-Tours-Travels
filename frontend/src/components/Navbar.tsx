@@ -36,7 +36,7 @@ export default function Navbar() {
           <div className="bg-black text-white dark:bg-white dark:text-black p-2 rounded-lg group-hover:-rotate-12 transition-transform">
             <Bus size={24} strokeWidth={2.5} />
           </div>
-          <span>MUNNA TRAVELS.</span>
+          <span>TRIPNOVA.</span>
         </Link>
 
         {/* Desktop Nav */}

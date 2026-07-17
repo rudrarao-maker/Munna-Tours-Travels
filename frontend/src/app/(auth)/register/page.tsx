@@ -39,7 +39,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md p-10 space-y-8 bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100">
         <div>
           <h2 className="text-3xl font-black text-center text-black tracking-tight">Create an Account</h2>
-          <p className="text-center text-gray-500 font-medium mt-2">Join Munna Travels today</p>
+          <p className="text-center text-gray-500 font-medium mt-2">Join TripNova Holidays today</p>
         </div>
         
         {error && (

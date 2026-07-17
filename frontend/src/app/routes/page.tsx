@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Search, MapPin, Calendar, Clock, ArrowRight, Bus, Phone, Mail, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import RouteAutocomplete from '@/components/RouteAutocomplete';
+import WishlistButton from '@/components/WishlistButton';
 
 type RouteData = {
   id: string;
@@ -123,6 +124,7 @@ export default function RoutesPage() {
                     <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-md text-white px-3 py-1.5 rounded-lg font-bold text-xs flex items-center border border-white/20">
                       <Clock size={14} className="mr-1.5" /> {route.time}
                     </div>
+                    <WishlistButton itemType="route" itemId={route.id} />
                   </div>
                   
                   <div className="p-8 flex-1 flex flex-col">

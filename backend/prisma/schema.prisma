@@ -27,6 +27,7 @@ model User {
   feedbacks         Feedback[]
   tripPlans         TripPlan[]
   chatMessages      ChatMessage[]
+  wishlists         Wishlist[]
 }
 
 model Route {
@@ -45,6 +46,7 @@ model Route {
   updatedAt DateTime  @updatedAt
   bookings  Booking[]
   reviews   Review[]
+  wishlists Wishlist[]
 }
 
 model Vehicle {
@@ -124,6 +126,8 @@ model Booking {
   mealPlan      String    @default("none")
   hotelId       String?
   hotel         Hotel?    @relation(fields: [hotelId], references: [id])
+  tourPackageId String?
+  tourPackage   TourPackage? @relation(fields: [tourPackageId], references: [id])
   date          String
   passengers    Int
   basePrice     Float     @default(0)
@@ -166,6 +170,27 @@ model Hotel {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   bookings      Booking[]
+  wishlists     Wishlist[]
+}
+
+model TourPackage {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  destination String
+  duration    String   @default("3N/4D")
+  price       Float
+  category    String   @default("Family") // Family, Solo, Couple, Adventure
+  images      String   @default("[]") // JSON array of image URLs
+  itinerary   String   @default("[]") // JSON array of day-by-day plans
+  includes    String   @default("[]") // JSON array (flights, hotels, meals, etc)
+  excludes    String   @default("[]") // JSON array
+  rating      Float    @default(5.0)
+  isPopular   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  bookings    Booking[]
 }
 
 // ─── E-TICKET & INVOICE ─────────────────────────────────────────
@@ -302,6 +327,8 @@ model Review {
   routeId   String
   route     Route    @relation(fields: [routeId], references: [id])
   status    String   @default("Pending") // Pending, Approved, Rejected
+  sentimentScore Float    @default(0) // -1.0 to 1.0
+  sentimentLabel String   @default("neutral") // positive, neutral, negative
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -336,4 +363,20 @@ model Blog {
   publishedAt DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ─── WISHLIST ───────────────────────────────────────────────────
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemType  String   // 'route' or 'hotel'
+  routeId   String?
+  route     Route?   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  hotelId   String?
+  hotel     Hotel?   @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, itemType, routeId, hotelId])
 }

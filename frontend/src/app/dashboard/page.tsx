@@ -1,12 +1,31 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Calendar, MapPin, Clock, ArrowRight, Download, FileText } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowRight, Download, FileText, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from '@/lib/axios';
 
 export default function DashboardOverview() {
   const [downloading, setDownloading] = useState(false);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [rationale, setRationale] = useState('');
+  const [loadingAi, setLoadingAi] = useState(true);
+
+  useEffect(() => {
+    const fetchRecs = async () => {
+      try {
+        const res = await axios.get('/ai/recommendations');
+        setRecommendations(res.data.recommendations || []);
+        setRationale(res.data.rationale || '');
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingAi(false);
+      }
+    };
+    fetchRecs();
+  }, []);
 
   const handleDownloadTicket = async (bookingId: string) => {
     setDownloading(true);
@@ -138,6 +157,49 @@ export default function DashboardOverview() {
           </div>
         </div>
       </div>
+
+      {/* AI Recommendations */}
+      <div className="p-8 rounded-3xl border relative overflow-hidden"
+        style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', boxShadow: 'var(--shadow-card)' }}>
+        
+        <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+          <Sparkles size={120} />
+        </div>
+
+        <h2 className="text-2xl font-black mb-2 flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+          <Sparkles className="text-purple-500" /> AI Recommendations
+        </h2>
+        <p className="font-medium mb-6 max-w-3xl" style={{ color: 'var(--muted)' }}>
+          {loadingAi ? 'Analyzing your travel history...' : (rationale || 'Handpicked trips just for you.')}
+        </p>
+        
+        {loadingAi ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             {[1,2,3].map(i => <div key={i} className="h-48 rounded-2xl animate-pulse bg-gray-200 dark:bg-gray-800" />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {recommendations.map((pkg, i) => (
+              <Link href={`/packages/${pkg.slug}`} key={i} className="group block border rounded-2xl p-4 hover:shadow-xl transition-all hover:-translate-y-1" style={{ borderColor: 'var(--card-border)' }}>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-black text-lg line-clamp-1" style={{ color: 'var(--foreground)' }}>{pkg.title}</h3>
+                </div>
+                <p className="text-sm font-medium mb-4 flex items-center text-gray-500"><MapPin size={14} className="mr-1" /> {pkg.destination}</p>
+                <div className="flex justify-between items-end mt-4 pt-4 border-t" style={{ borderColor: 'var(--card-border)' }}>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Starting From</p>
+                    <p className="text-lg font-black text-green-500">₹{pkg.price}</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <ArrowRight size={16} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

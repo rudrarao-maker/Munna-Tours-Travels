@@ -3,7 +3,7 @@ export default function Footer() {
     <footer style={{ backgroundColor: 'var(--footer-bg)' }} className="text-white pt-12 pb-8">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
-          <h3 className="text-xl font-bold mb-4">Munna Travels</h3>
+          <h3 className="text-xl font-bold mb-4">TripNova Holidays</h3>
           <p style={{ color: 'var(--footer-text)' }}>Your Journey, Our Responsibility. Discover the world with premium comfort and safety.</p>
         </div>
         <div>
@@ -24,13 +24,13 @@ export default function Footer() {
         </div>
         <div>
           <h4 className="font-bold mb-4">Contact Us</h4>
-          <p style={{ color: 'var(--footer-text)' }}>Email: support@munnatravels.com</p>
+          <p style={{ color: 'var(--footer-text)' }}>Email: support@tripnovaholidays.com</p>
           <p style={{ color: 'var(--footer-text)' }}>Phone: +91 98765 43210</p>
         </div>
       </div>
       <div className="container mx-auto px-4 mt-8 pt-8 text-center" 
         style={{ borderTop: '1px solid var(--footer-border)', color: 'var(--footer-text)' }}>
-        &copy; {new Date().getFullYear()} Munna Tours & Travels. All rights reserved.
+        &copy; {new Date().getFullYear()} TripNova Holidays. All rights reserved.
       </div>
     </footer>
   );

@@ -7,10 +7,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const formattedSlug = slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' to ');
 
   return {
-    title: `Charter Bus from ${formattedSlug} | Munna Travels`,
+    title: `Charter Bus from ${formattedSlug} | TripNova Holidays`,
     description: `Request a quote for a private charter bus from ${formattedSlug}. We offer premium coaches, minibuses, and sleepers for group travel.`,
     openGraph: {
-      title: `Charter Bus from ${formattedSlug} | Munna Travels`,
+      title: `Charter Bus from ${formattedSlug} | TripNova Holidays`,
       description: `Request a quote for a private charter bus from ${formattedSlug}. We offer premium coaches, minibuses, and sleepers for group travel.`,
     }
   };

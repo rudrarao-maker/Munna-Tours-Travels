@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
 
 interface BookingData {
   id: string;
@@ -25,14 +26,14 @@ interface BookingData {
  * Returns a Buffer (no file I/O).
  */
 export function generateTicketPDF(booking: BookingData): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const doc = new PDFDocument({
         size: 'A4',
         margin: 50,
         info: {
           Title: `E-Ticket - ${booking.id}`,
-          Author: 'Munna Tours & Travels',
+          Author: 'TripNova Holidays',
         },
       });
 
@@ -46,17 +47,21 @@ export function generateTicketPDF(booking: BookingData): Promise<Buffer> {
       // ─── Header Band ───
       doc.rect(50, 50, pageWidth, 80).fill('#000000');
       doc.fontSize(28).fill('#FFFFFF').font('Helvetica-Bold');
-      doc.text('MUNNA TRAVELS', 70, 68, { width: pageWidth - 40 });
+      doc.text('TRIPNOVA HOLIDAYS', 70, 68, { width: pageWidth - 40 });
       doc.fontSize(11).fill('#AAAAAA').font('Helvetica');
       doc.text('Premium Charter Bus & Group Bookings', 70, 102, { width: pageWidth - 40 });
 
-      // ─── E-Ticket Title ───
+      // ─── E-Ticket Title & QR Code ───
       doc.moveDown(2);
       const titleY = 155;
       doc.fontSize(20).fill('#000000').font('Helvetica-Bold');
       doc.text('E-TICKET', 50, titleY);
       doc.fontSize(10).fill('#666666').font('Helvetica');
       doc.text('Present this ticket at the time of boarding', 50, titleY + 26);
+
+      // Generate and embed QR Code
+      const qrDataUrl = await QRCode.toDataURL(JSON.stringify({ bookingId: booking.id, status: booking.status }));
+      doc.image(qrDataUrl, 50 + pageWidth - 80, titleY - 10, { width: 80 });
 
       // ─── Dotted Separator ───
       const sepY = titleY + 50;
@@ -152,8 +157,8 @@ export function generateTicketPDF(booking: BookingData): Promise<Buffer> {
         '• Please arrive at the boarding point at least 15 minutes before departure.',
         '• Carry a valid government-issued photo ID during travel.',
         '• Cancellation policy: Full refund if cancelled 24hrs before departure; 50% refund within 24hrs.',
-        '• Munna Tours & Travels reserves the right to alter routes due to unforeseen circumstances.',
-        '• For support, contact: support@munnatravels.com | +91 98765 43210',
+        '• TripNova Holidays reserves the right to alter routes due to unforeseen circumstances.',
+        '• For support, contact: support@tripnovaholidays.com | +91 98765 43210',
       ];
       terms.forEach((term, i) => {
         doc.text(term, 50, termsY + 16 + i * 13, { width: pageWidth });
@@ -163,7 +168,7 @@ export function generateTicketPDF(booking: BookingData): Promise<Buffer> {
       const footerY = doc.page.height - 60;
       doc.fontSize(8).fill('#BBBBBB').font('Helvetica');
       doc.text(
-        '© ' + new Date().getFullYear() + ' Munna Tours & Travels. All rights reserved. This is a computer-generated ticket and does not require a signature.',
+        '© ' + new Date().getFullYear() + ' TripNova Holidays. All rights reserved. This is a computer-generated ticket and does not require a signature.',
         50, footerY, { width: pageWidth, align: 'center' }
       );
 

@@ -1,163 +1,131 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Navigation, Bus, Clock, AlertCircle, CheckCircle, Phone } from 'lucide-react';
+import { MapPin, Bus, AlertCircle, Clock, Info } from 'lucide-react';
+import 'leaflet/dist/leaflet.css';
 
-export default function TrackingPage() {
-  const [ticketNumber, setTicketNumber] = useState('');
-  const [isTracking, setIsTracking] = useState(false);
-  const [eta, setEta] = useState('2 hrs 15 mins');
-  const [status, setStatus] = useState('On Route');
+// Leaflet requires window to be defined, so we dynamically import the Map components
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
-  const handleTrack = (e: React.FormEvent) => {
-    e.preventDefault();
-    if(ticketNumber.length > 3) {
-      setIsTracking(true);
-    }
-  };
+// We need to fix the default Leaflet marker icons in Next.js
+const getBusIcon = () => {
+  if (typeof window !== 'undefined') {
+    const L = require('leaflet');
+    return L.divIcon({
+      className: 'custom-bus-marker',
+      html: `<div style="background-color: black; border-radius: 50%; padding: 8px; border: 2px solid white; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+             </div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
+    });
+  }
+  return null;
+};
+
+export default function LiveTracking() {
+  const [position, setPosition] = useState<[number, number]>([19.0760, 72.8777]); // Default Mumbai
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate real-time GPS updates from a moving bus
+    // Moving slowly from Mumbai towards Pune
+    let lat = 19.0760;
+    let lng = 72.8777;
+
+    const interval = setInterval(() => {
+      lat -= 0.0005; // Move South
+      lng += 0.0006; // Move East
+      setPosition([lat, lng]);
+      setLoading(false);
+    }, 3000); // Update every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="flex flex-col min-h-screen pt-24" style={{ backgroundColor: 'var(--background)' }}>
-      <div className="container mx-auto px-4 max-w-6xl py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4" style={{ color: 'var(--foreground)' }}>Live Bus Tracking</h1>
-          <p className="text-lg font-medium" style={{ color: 'var(--muted)' }}>Enter your ticket PNR or registered phone number to track your journey in real-time.</p>
-        </div>
-
-        {/* Tracking Input Widget */}
-        <div className="p-4 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-w-2xl mx-auto mb-12"
-             style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-          <form onSubmit={handleTrack} className="flex flex-col md:flex-row gap-3">
-            <div className="flex-1 flex items-center px-4 py-2 rounded-2xl border border-transparent focus-within:border-black dark:focus-within:border-white transition-colors"
-                 style={{ backgroundColor: 'var(--input-bg)' }}>
-              <Navigation className="mr-3" size={24} style={{ color: 'var(--muted-light)' }} />
-              <input 
-                type="text" 
-                value={ticketNumber}
-                onChange={(e) => setTicketNumber(e.target.value)}
-                placeholder="Enter PNR or Phone Number" 
-                className="bg-transparent outline-none w-full font-bold text-lg py-2" 
-                style={{ color: 'var(--foreground)' }}
-              />
+    <div className="flex flex-col min-h-screen">
+      
+      {/* Header */}
+      <section className="pt-16 pb-12 px-4" style={{ backgroundColor: 'var(--section-alt)' }}>
+        <div className="container mx-auto max-w-6xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="inline-flex items-center gap-2 bg-green-500/10 text-green-600 px-4 py-1.5 rounded-full font-bold text-sm tracking-wider uppercase mb-4"
+              >
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Live Now
+              </motion.div>
+              <h1 className="text-3xl md:text-5xl font-black tracking-tighter mb-2" style={{ color: 'var(--foreground)' }}>
+                Vehicle Tracking
+              </h1>
+              <p className="font-medium text-lg" style={{ color: 'var(--muted)' }}>
+                Tracking Bus #MH04-AB-1234 (Mumbai - Pune)
+              </p>
             </div>
-            <button type="submit" className="bg-black text-white dark:bg-white dark:text-black px-8 py-4 rounded-2xl font-black hover:opacity-90 transition flex items-center justify-center shrink-0">
-              <Search className="mr-2" size={20} /> Track
-            </button>
-          </form>
-        </div>
-
-        {/* Tracking Display Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Map Area */}
-          <div className="lg:col-span-2 rounded-3xl overflow-hidden relative shadow-md min-h-[500px]"
-               style={{ border: '1px solid var(--card-border)' }}>
-            <iframe 
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d118106.70010221669!2d72.48489816174163!3d23.02049777123985!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e848aba5bd449%3A0x4fcedd11614f6516!2sAhmedabad%2C%20Gujarat!5e0!3m2!1sen!2sin!4v1709140000000!5m2!1sen!2sin" 
-              width="100%" 
-              height="100%" 
-              style={{ border: 0, position: 'absolute', inset: 0 }} 
-              allowFullScreen={true} 
-              loading="lazy" 
-              referrerPolicy="no-referrer-when-downgrade"
-            ></iframe>
             
-            {/* Overlay if not tracking */}
-            {!isTracking && (
-              <div className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center">
-                <div className="text-center p-8 rounded-2xl border border-white/10" style={{ backgroundColor: 'var(--card-bg)' }}>
-                  <MapPin size={48} className="mx-auto mb-4 opacity-50" style={{ color: 'var(--foreground)' }} />
-                  <h3 className="text-2xl font-black mb-2" style={{ color: 'var(--foreground)' }}>Waiting for Input</h3>
-                  <p className="font-medium" style={{ color: 'var(--muted)' }}>Enter your PNR to start live tracking on the map.</p>
-                </div>
+            <div className="flex gap-4">
+              <div className="bg-white dark:bg-gray-800 border rounded-2xl p-4 flex flex-col items-center justify-center min-w-[120px]" style={{ borderColor: 'var(--card-border)' }}>
+                <Clock className="text-gray-400 mb-2" size={24} />
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-400">ETA</p>
+                <p className="text-xl font-black" style={{ color: 'var(--foreground)' }}>2h 15m</p>
               </div>
-            )}
-          </div>
-
-          {/* Status Panel */}
-          <div className="space-y-6">
-            <div className="p-8 rounded-3xl shadow-md border"
-                 style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
-              <h2 className="text-2xl font-black mb-6" style={{ color: 'var(--foreground)' }}>Journey Status</h2>
-              
-              {isTracking ? (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between p-4 rounded-2xl" style={{ backgroundColor: 'var(--section-alt)' }}>
-                    <div className="flex items-center gap-3">
-                      <Bus className="text-blue-500" size={24} />
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Current Status</p>
-                        <p className="font-black text-lg text-blue-500">{status}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 rounded-2xl" style={{ backgroundColor: 'var(--section-alt)' }}>
-                    <div className="flex items-center gap-3">
-                      <Clock className="text-green-500" size={24} />
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Est. Time of Arrival</p>
-                        <p className="font-black text-lg text-green-500">{eta}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-8 relative">
-                    <div className="absolute left-[15px] top-4 bottom-4 w-1 rounded-full" style={{ backgroundColor: 'var(--card-border)' }}></div>
-                    
-                    {/* Timeline items */}
-                    <div className="relative pl-12 pb-8">
-                      <div className="absolute left-0 top-1 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white border-4" style={{ borderColor: 'var(--card-bg)' }}>
-                        <CheckCircle size={14} />
-                      </div>
-                      <h4 className="font-bold" style={{ color: 'var(--foreground)' }}>Departed Ahmedabad</h4>
-                      <p className="text-sm font-medium" style={{ color: 'var(--muted)' }}>08:30 AM</p>
-                    </div>
-
-                    <div className="relative pl-12 pb-8">
-                      <div className="absolute left-0 top-1 w-8 h-8 rounded-full border-4 flex items-center justify-center" style={{ borderColor: 'var(--card-bg)', backgroundColor: 'var(--foreground)' }}>
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--background)' }} />
-                      </div>
-                      <h4 className="font-bold" style={{ color: 'var(--foreground)' }}>Approaching Vadodara</h4>
-                      <p className="text-sm font-medium" style={{ color: 'var(--muted)' }}>Current Location</p>
-                    </div>
-
-                    <div className="relative pl-12">
-                      <div className="absolute left-0 top-1 w-8 h-8 rounded-full border-4 flex items-center justify-center" style={{ borderColor: 'var(--card-bg)', backgroundColor: 'var(--section-alt)' }}>
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--muted)' }} />
-                      </div>
-                      <h4 className="font-bold opacity-50" style={{ color: 'var(--foreground)' }}>Arrival at Surat</h4>
-                      <p className="text-sm font-medium opacity-50" style={{ color: 'var(--muted)' }}>Est. 12:45 PM</p>
-                    </div>
-                  </div>
-
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <AlertCircle size={48} className="mx-auto mb-4 opacity-20" style={{ color: 'var(--foreground)' }} />
-                  <p className="font-medium" style={{ color: 'var(--muted)' }}>Tracking details will appear here once you enter a valid PNR.</p>
-                </div>
-              )}
+              <div className="bg-white dark:bg-gray-800 border rounded-2xl p-4 flex flex-col items-center justify-center min-w-[120px]" style={{ borderColor: 'var(--card-border)' }}>
+                <MapPin className="text-gray-400 mb-2" size={24} />
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-400">Distance</p>
+                <p className="text-xl font-black" style={{ color: 'var(--foreground)' }}>84 km</p>
+              </div>
             </div>
-            
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
-              <button className="p-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-colors border"
-                      style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', color: 'var(--foreground)' }}>
-                <Phone size={20} />
-                Call Driver
-              </button>
-              <button className="p-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-colors border"
-                      style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)', color: 'var(--foreground)' }}>
-                <MapPin size={20} />
-                Share ETA
-              </button>
-            </div>
-
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Map Section */}
+      <section className="flex-1 relative z-0">
+        {typeof window !== 'undefined' && !loading && (
+          <MapContainer 
+            center={position} 
+            zoom={13} 
+            style={{ width: '100%', height: 'calc(100vh - 250px)' }}
+            zoomControl={false}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {getBusIcon() && (
+              <Marker position={position} icon={getBusIcon()!}>
+                <Popup>
+                  <div className="text-center font-bold">
+                    <p className="text-sm">TripNova Volvo</p>
+                    <p className="text-xs text-green-600">Speed: 62 km/h</p>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+          </MapContainer>
+        )}
+
+        {/* Floating Actions overlay */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[1000]">
+          <div className="bg-white/80 dark:bg-black/80 backdrop-blur-md border rounded-2xl p-2 flex items-center gap-2 shadow-2xl" style={{ borderColor: 'var(--card-border)' }}>
+            <button className="px-6 py-3 rounded-xl font-bold bg-black text-white dark:bg-white dark:text-black flex items-center gap-2 transition hover:opacity-90">
+              <Info size={18} /> View Route Details
+            </button>
+            <button className="px-4 py-3 rounded-xl font-bold text-red-500 bg-red-50 dark:bg-red-950/30 flex items-center gap-2 transition hover:bg-red-100">
+              <AlertCircle size={18} /> Emergency / SOS
+            </button>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }

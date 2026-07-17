@@ -103,7 +103,7 @@ export default function QuoteRequestPage() {
         key: 'rzp_test_mock123', // Demo Key
         amount: orderRes.data.amount,
         currency: orderRes.data.currency,
-        name: 'Munna Travels',
+        name: 'TripNova Holidays',
         description: 'Advance Booking Deposit',
         order_id: orderRes.data.id,
         handler: async function (response: any) {
@@ -313,7 +313,7 @@ export default function QuoteRequestPage() {
                 </div>
               </div>
               <a
-                href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi Munna Travels! I want to book a bus from ${route.from} to ${route.to}. Route: ${route.routeId}. Please share the quote.`)}`}
+                href={`https://wa.me/919876543210?text=${encodeURIComponent(`Hi TripNova Holidays! I want to book a bus from ${route.from} to ${route.to}. Route: ${route.routeId}. Please share the quote.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-green-500 text-white px-8 py-3 rounded-xl font-black hover:bg-green-600 transition shadow-md shrink-0"

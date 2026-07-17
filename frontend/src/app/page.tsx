@@ -183,7 +183,7 @@ export default function Home() {
       <section className="py-24" style={{ backgroundColor: 'var(--background)' }}>
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4" style={{ color: 'var(--foreground)' }}>Why Book With Munna Travels?</h2>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4" style={{ color: 'var(--foreground)' }}>Why Book With TripNova Holidays?</h2>
             <p className="text-xl font-medium" style={{ color: 'var(--muted)' }}>We deliver unparalleled reliability and peace of mind on every journey.</p>
           </div>
           
@@ -216,7 +216,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
             {[
               {
-                text: '"I travel frequently between Jaipur and Delhi for business. Munna Travels\' Volvo sleeper is the only service where I actually get a full night\'s sleep. Spotlessly clean!"',
+                text: '"I travel frequently between Jaipur and Delhi for business. TripNova Holidays\' Volvo sleeper is the only service where I actually get a full night\'s sleep. Spotlessly clean!"',
                 name: 'Aarav Sharma',
                 role: 'Frequent Traveler',
                 image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop'

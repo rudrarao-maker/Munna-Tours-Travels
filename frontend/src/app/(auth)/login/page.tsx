@@ -115,7 +115,7 @@ export default function LoginPage() {
           <div className="bg-black/40 backdrop-blur-md p-8 rounded-3xl border border-white/10 max-w-lg">
             <h2 className="text-3xl font-black tracking-tight mb-4 text-white">Experience Luxury Travel</h2>
             <p className="text-white/80 font-medium leading-relaxed mb-6">
-              Join thousands of satisfied passengers who choose Munna Tours & Travels for their intercity journeys. Access exclusive routes, AI planning, and seamless booking.
+              Join thousands of satisfied passengers who choose TripNova Holidays for their intercity journeys. Access exclusive routes, AI planning, and seamless booking.
             </p>
             <div className="flex items-center gap-4 text-sm font-bold uppercase tracking-wider text-white/90">
               <span className="flex items-center"><ArrowRight size={16} className="mr-2" /> Fleet Management</span>

@@ -36,7 +36,7 @@ export default function BlogsPage() {
           <div className="text-center mb-16">
             <h1 className="text-5xl font-black mb-4">Travel Guides & Stories</h1>
             <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-              Discover the best destinations, travel tips, and exclusive guides from the Munna Travels experts.
+              Discover the best destinations, travel tips, and exclusive guides from the TripNova Holidays experts.
             </p>
           </div>
 

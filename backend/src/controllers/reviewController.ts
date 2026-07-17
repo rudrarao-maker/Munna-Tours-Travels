@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import axios from 'axios';
 
 const prisma = new PrismaClient();
 
@@ -31,12 +32,40 @@ export const getReviews = async (req: Request, res: Response) => {
 export const createReview = async (req: Request, res: Response) => {
   try {
     const { rating, comment, userId, routeId } = req.body;
+    
+    let sentimentScore = 0;
+    let sentimentLabel = 'neutral';
+
+    // AI Sentiment Analysis
+    if (comment && process.env.GEMINI_API_KEY) {
+      try {
+        const prompt = `Analyze the sentiment of this travel review: "${comment}". 
+        Return a JSON object strictly in this format: {"score": [number between -1.0 and 1.0], "label": "[positive, neutral, or negative]"}`;
+        
+        const aiRes = await axios.post(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+          { contents: [{ parts: [{ text: prompt }] }] }
+        );
+        
+        const aiText = aiRes.data.candidates[0].content.parts[0].text;
+        const cleanJson = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const sentimentData = JSON.parse(cleanJson);
+        
+        sentimentScore = sentimentData.score;
+        sentimentLabel = sentimentData.label;
+      } catch (err) {
+        console.error('AI Sentiment Analysis Failed:', err);
+      }
+    }
+
     const review = await prisma.review.create({
       data: {
         rating: parseInt(rating),
         comment,
         userId,
-        routeId
+        routeId,
+        sentimentScore,
+        sentimentLabel
       }
     });
     res.status(201).json(review);

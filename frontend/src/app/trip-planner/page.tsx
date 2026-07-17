@@ -30,7 +30,7 @@ export default function TripPlannerPage() {
           day: 1,
           title: "Arrival and Local Culture",
           activities: [
-            { time: "09:00 AM", description: "Arrive via Munna Travels Premium Coach" },
+            { time: "09:00 AM", description: "Arrive via TripNova Holidays Premium Coach" },
             { time: "12:00 PM", description: "Check-in and Authentic Local Lunch" },
             { time: "04:00 PM", description: "Heritage Walk in the Old City" }
           ]
