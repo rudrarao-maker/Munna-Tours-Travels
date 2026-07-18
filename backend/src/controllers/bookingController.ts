@@ -5,6 +5,7 @@ import { generateTicketPDF } from '../utils/pdfGenerator';
 import { AppError } from '../utils/AppError';
 import { emailQueue } from '../utils/queue';
 import { io } from '../server';
+import { AuthRequest } from '../middlewares/authMiddleware';
 
 const prisma = new PrismaClient();
 
@@ -48,13 +49,16 @@ export const getBookings = async (req: Request, res: Response, next: NextFunctio
 // @desc    Get single booking
 // @route   GET /api/bookings/:id
 // @access  Private
-export const getBookingById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const getBookingById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: (req.params.id as string) },
       include: { route: true, user: true, hotel: true }
     });
     if (booking) {
+      if (req.user?.role !== 'admin' && booking.userId !== req.user?.id) {
+        return next(new AppError('Not authorized to view this booking', 403));
+      }
       res.json(booking);
     } else {
       next(new AppError('Booking not found', 404));
@@ -72,7 +76,8 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
     const { 
       routeId, date, passengers, userId, userEmail,
       vehicleType, mealPlan, hotelId, 
-      basePrice, vehiclePrice, mealPrice, hotelPrice, taxes, totalPrice 
+      basePrice, vehiclePrice, mealPrice, hotelPrice, taxes, totalPrice,
+      seats
     } = req.body;
     
     const booking = await prisma.booking.create({
@@ -90,6 +95,7 @@ export const createBooking = async (req: Request, res: Response, next: NextFunct
         hotelPrice: parseFloat(hotelPrice) || 0,
         taxes: parseFloat(taxes) || 0,
         totalPrice: parseFloat(totalPrice) || 0,
+        seats: JSON.stringify(seats || []),
       }
     });
 
@@ -131,7 +137,7 @@ export const updateBookingStatus = async (req: Request, res: Response, next: Nex
 // @desc    Download e-ticket PDF for a booking
 // @route   GET /api/bookings/:id/ticket
 // @access  Public
-export const downloadTicket = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const downloadTicket = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: (req.params.id as string) },
@@ -140,6 +146,10 @@ export const downloadTicket = async (req: Request, res: Response, next: NextFunc
 
     if (!booking) {
       return next(new AppError('Booking not found', 404));
+    }
+
+    if (req.user?.role !== 'admin' && booking.userId !== req.user?.id) {
+      return next(new AppError('Not authorized to view this ticket', 403));
     }
 
     const pdfBuffer = await generateTicketPDF(booking);
@@ -160,7 +170,7 @@ export const downloadTicket = async (req: Request, res: Response, next: NextFunc
 // @desc    Cancel a booking
 // @route   PUT /api/bookings/:id/cancel
 // @access  Public (should ideally be protected, but keeping public for demo)
-export const cancelBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const cancelBooking = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
       where: { id: (req.params.id as string) },
@@ -168,6 +178,10 @@ export const cancelBooking = async (req: Request, res: Response, next: NextFunct
 
     if (!booking) {
       return next(new AppError('Booking not found', 404));
+    }
+
+    if (req.user?.role !== 'admin' && booking.userId !== req.user?.id) {
+      return next(new AppError('Not authorized to cancel this booking', 403));
     }
 
     if (booking.status === 'Cancelled') {

@@ -31,7 +31,7 @@ export const getReviews = async (req: Request, res: Response) => {
 // @access  Private
 export const createReview = async (req: Request, res: Response) => {
   try {
-    const { rating, comment, userId, routeId } = req.body;
+    const { rating, comment, userId, routeId, images } = req.body;
     
     let sentimentScore = 0;
     let sentimentLabel = 'neutral';
@@ -64,6 +64,7 @@ export const createReview = async (req: Request, res: Response) => {
         comment,
         userId,
         routeId,
+        images: images ? JSON.stringify(images) : "[]",
         sentimentScore,
         sentimentLabel
       }

@@ -7,7 +7,8 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Map, Bus, Ticket, Building2, Package, 
   MessageSquare, Bell, FileText, PieChart, Users, Settings, 
-  Menu, X, LogOut, ChevronLeft, ChevronRight, PenTool
+  Menu, X, LogOut, ChevronLeft, ChevronRight, PenTool,
+  CreditCard, Tag, UserCheck, Route, Star
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -19,16 +20,27 @@ const menuItems = [
   { group: 'Operations', items: [
     { href: '/admin/fleet-tracking', icon: Map, label: 'Fleet Tracking' },
     { href: '/admin/fleet', icon: Bus, label: 'Fleet Management' },
+    { href: '/admin/drivers', icon: UserCheck, label: 'Drivers' },
+    { href: '/admin/vehicles', icon: Bus, label: 'Vehicles' },
     { href: '/admin/bookings', icon: Ticket, label: 'Bookings & Tickets' },
+    { href: '/admin/payments', icon: CreditCard, label: 'Payments' },
     { href: '/admin/invoices', icon: FileText, label: 'Invoices' },
   ]},
   { group: 'Content', items: [
+    { href: '/admin/routes', icon: Route, label: 'Routes' },
+    { href: '/admin/packages', icon: Package, label: 'Tour Packages' },
     { href: '/admin/hotels', icon: Building2, label: 'Hotels' },
+    { href: '/admin/coupons', icon: Tag, label: 'Offers & Coupons' },
     { href: '/admin/blogs', icon: PenTool, label: 'Travel Blogs' },
   ]},
   { group: 'Engagement', items: [
+    { href: '/admin/reviews', icon: Star, label: 'Reviews' },
     { href: '/admin/feedback', icon: MessageSquare, label: 'Feedback & AI' },
     { href: '/admin/notifications', icon: Bell, label: 'Notifications' },
+    { href: '/admin/users', icon: Users, label: 'Users' },
+  ]},
+  { group: 'System', items: [
+    { href: '/admin/settings', icon: Settings, label: 'Settings' },
   ]},
 ];
 

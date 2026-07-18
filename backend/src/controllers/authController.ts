@@ -8,7 +8,13 @@ import { AuthRequest } from '../middlewares/authMiddleware';
 
 const generateToken = (id: string, role: string) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET || 'fallback_secret_key', {
-    expiresIn: '30d',
+    expiresIn: '15m', // Short lived access token
+  });
+};
+
+const generateRefreshToken = (id: string, role: string) => {
+  return jwt.sign({ id, role }, process.env.JWT_REFRESH_SECRET || 'fallback_refresh_key', {
+    expiresIn: '7d', // Longer lived refresh token
   });
 };
 
@@ -50,12 +56,22 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Hardcode fallback for demo purposes if DB is empty
     if (email === 'admin@munnatravels.com' && password === 'admin123') {
+      const accessToken = generateToken('dummy_admin_id', 'admin');
+      const refreshToken = generateRefreshToken('dummy_admin_id', 'admin');
+      
+      res.cookie('jwt', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
       res.json({
         id: 'dummy_admin_id',
         name: 'Admin User',
         email: 'admin@munnatravels.com',
         role: 'admin',
-        token: generateToken('dummy_admin_id', 'admin'),
+        token: accessToken,
       });
       return;
     }
@@ -90,11 +106,21 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         }
       }
 
+      const accessToken = generateToken(user.id, user.role);
+      const refreshToken = generateRefreshToken(user.id, user.role);
+      
+      res.cookie('jwt', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
       res.json({
         id: user.id,
         email: user.email,
         role: user.role,
-        token: generateToken(user.id, user.role),
+        token: accessToken,
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
@@ -185,7 +211,28 @@ export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
 };
 
 export const logoutUser = async (req: Request, res: Response): Promise<void> => {
+  res.cookie('jwt', '', {
+    httpOnly: true,
+    expires: new Date(0)
+  });
   res.json({ message: 'Logged out successfully' });
+};
+
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+  const token = req.cookies.jwt;
+
+  if (!token) {
+    res.status(401).json({ message: 'Not authorized, no refresh token' });
+    return;
+  }
+
+  try {
+    const decoded: any = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'fallback_refresh_key');
+    const accessToken = generateToken(decoded.id, decoded.role);
+    res.json({ token: accessToken });
+  } catch (error) {
+    res.status(401).json({ message: 'Not authorized, token failed' });
+  }
 };
 
 export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {

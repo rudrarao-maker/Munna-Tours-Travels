@@ -139,9 +139,10 @@ model Booking {
   hotelPrice    Float     @default(0)
   taxes         Float     @default(0)
   totalPrice    Float     @default(0)
-  status        String    @default("Confirmed") // Confirmed, Cancelled, Completed
+  status        String    @default("Pending") // Pending, Confirmed, Cancelled, Completed, Refunded
   paymentStatus String    @default("Pending") // Pending, Paid, Refunded
   paymentId     String?   // Razorpay payment ID
+  seats         String    @default("[]") // JSON array of selected seat numbers
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   eTicket       ETicket?
@@ -264,6 +265,7 @@ model Feedback {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   rating         Int      // 1-5
   comment        String   @default("")
+  images         String   @default("[]") // JSON array of uploaded image URLs
   sentimentScore Float    @default(0) // -1.0 to 1.0
   sentimentLabel String   @default("neutral") // positive, neutral, negative
   categories     String   @default("[]") // JSON: ["cleanliness","punctuality","comfort"]
@@ -337,6 +339,7 @@ model Review {
   id        String   @id @default(uuid())
   rating    Int      // 1 to 5
   comment   String?
+  images    String   @default("[]") // JSON array of uploaded image URLs
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   routeId   String

@@ -74,9 +74,11 @@ export default function MyBookingsPage() {
   const filteredBookings = bookings.filter(b => filter === 'all' || b.status === filter);
 
   const statusColors: Record<string, string> = {
+    Pending: 'bg-yellow-100 text-yellow-700',
     Confirmed: 'bg-green-100 text-green-700',
     Completed: 'bg-blue-100 text-blue-700',
     Cancelled: 'bg-red-100 text-red-700',
+    Refunded: 'bg-gray-100 text-gray-700',
   };
 
   return (
@@ -92,7 +94,7 @@ export default function MyBookingsPage() {
 
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-          {['all', 'Confirmed', 'Completed', 'Cancelled'].map(f => (
+          {['all', 'Pending', 'Confirmed', 'Completed', 'Cancelled', 'Refunded'].map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${filter === f ? 'scale-105' : 'opacity-60 hover:opacity-100'}`}
               style={{ backgroundColor: filter === f ? 'var(--foreground)' : 'var(--card-bg)', color: filter === f ? 'var(--background)' : 'var(--foreground)', border: '1px solid var(--card-border)' }}>

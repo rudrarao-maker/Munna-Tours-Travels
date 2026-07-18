@@ -1,10 +1,13 @@
 'use client';
 
+import { Metadata } from 'next';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, MapPin, Calendar, Star, Clock, Filter, Compass } from 'lucide-react';
 import Link from 'next/link';
 import axios from '@/lib/axios';
+
+
 
 interface TourPackage {
   id: string;

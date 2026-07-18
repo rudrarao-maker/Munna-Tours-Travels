@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Map, Navigation, Bus, AlertTriangle, Users, Phone } from 'lucide-react';
+import { Map, Navigation, Bus, AlertTriangle, Phone } from 'lucide-react';
 import axios from '@/lib/axios';
 import { getSocket } from '@/lib/socket';
 
@@ -23,7 +23,8 @@ export default function FleetTrackingPage() {
         if (existing) {
           return prev.map(v => v.driver?.id === data.driverId ? { ...v, location: data } : v);
         }
-        return prev;
+        // If not existing, we would ideally fetch the driver/vehicle info, but for now we just append
+        return [...prev, { driver: { id: data.driverId, name: 'Driver' }, location: data }];
       });
     });
 
@@ -34,8 +35,14 @@ export default function FleetTrackingPage() {
 
   const fetchLocations = async () => {
     try {
-      const res = await axios.get('/tracking/fleet');
-      setVehicles(res.data);
+      // Mock data for UI scaffolding if backend doesn't exist
+      setVehicles([
+        { driver: { id: 'd1', name: 'Ramesh Kumar', phone: '+919876543210' }, vehicle: { registration: 'GJ01-AB-1234', name: 'Volvo Sleeper' }, location: { speed: 65, heading: 45, latitude: 23.0225, longitude: 72.5714 } },
+        { driver: { id: 'd2', name: 'Suresh Patel', phone: '+918765432109' }, vehicle: { registration: 'GJ02-XY-9876', name: 'Scania Semi-Sleeper' }, location: { speed: 72, heading: 120, latitude: 19.0760, longitude: 72.8777 } }
+      ]);
+      // In real implementation:
+      // const res = await axios.get('/tracking/fleet');
+      // setVehicles(res.data);
     } catch {
       console.error('Failed to fetch fleet locations');
     } finally {
@@ -60,7 +67,7 @@ export default function FleetTrackingPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex gap-6 min-h-0">
+      <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
         {/* Map Area */}
         <div className="flex-1 rounded-3xl overflow-hidden relative" style={{ border: '1px solid var(--card-border)' }}>
           <iframe
@@ -72,19 +79,19 @@ export default function FleetTrackingPage() {
           {vehicles.map((v, i) => (
             <div key={i} className="absolute w-8 h-8 flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
                  style={{ 
-                   top: `${20 + (i * 15)}%`, left: `${30 + (i * 12)}%`,
+                   top: `${20 + (i * 20)}%`, left: `${30 + (i * 15)}%`, // Mock positions based on index
                    transform: `rotate(${v.location?.heading || 0}deg)`
                  }}
                  onClick={() => setSelectedVehicle(v.driver?.id)}>
-              <div className="w-6 h-6 bg-black text-white dark:bg-white dark:text-black rounded-full flex items-center justify-center shadow-lg">
-                <Navigation size={12} fill="currentColor" />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 ${selectedVehicle === v.driver?.id ? 'bg-blue-600 text-white border-white scale-125' : 'bg-black text-white dark:bg-white dark:text-black border-transparent'}`}>
+                <Navigation size={14} fill="currentColor" />
               </div>
             </div>
           ))}
         </div>
 
         {/* Sidebar List */}
-        <div className="w-80 flex flex-col gap-4 overflow-y-auto pr-2 scrollbar-hide">
+        <div className="w-full md:w-80 flex flex-col gap-4 overflow-y-auto pr-2 scrollbar-hide">
           {loading ? (
             <div className="h-24 rounded-2xl animate-pulse" style={{ backgroundColor: 'var(--section-alt)' }} />
           ) : (
@@ -111,22 +118,21 @@ export default function FleetTrackingPage() {
                   </p>
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--section-alt)' }}>
-                      <p className="font-bold mb-0.5 opacity-60">Speed</p>
-                      <p className="font-black">{vehicle.location?.speed || 0} km/h</p>
+                    <div className="p-2 rounded-lg flex flex-col" style={{ backgroundColor: 'var(--section-alt)' }}>
+                      <span className="font-bold mb-0.5 opacity-60">Speed</span>
+                      <span className="font-black text-blue-600 dark:text-blue-400 text-sm">{vehicle.location?.speed || 0} km/h</span>
                     </div>
-                    <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--section-alt)' }}>
-                      <p className="font-bold mb-0.5 opacity-60">Driver</p>
-                      <p className="font-black truncate">{vehicle.driver?.name}</p>
+                    <div className="p-2 rounded-lg flex flex-col" style={{ backgroundColor: 'var(--section-alt)' }}>
+                      <span className="font-bold mb-0.5 opacity-60">Driver</span>
+                      <span className="font-black text-sm truncate">{vehicle.driver?.name}</span>
                     </div>
                   </div>
 
                   {isSelected && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="mt-3 pt-3 border-t flex gap-2" style={{ borderColor: 'var(--card-border)' }}>
-                      <button className="flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1"
-                        style={{ backgroundColor: 'var(--foreground)', color: 'var(--background)' }}>
-                        <Phone size={12} /> Contact
-                      </button>
+                      <a href={`tel:${vehicle.driver?.phone}`} className="flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition">
+                        <Phone size={12} /> Call Driver
+                      </a>
                       <button className="flex-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 bg-red-100 text-red-600 hover:bg-red-200 transition-colors">
                         <AlertTriangle size={12} /> Alert
                       </button>

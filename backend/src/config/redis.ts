@@ -14,10 +14,7 @@ export async function initRedis(): Promise<void> {
     redisClient = createClient({ 
       url,
       socket: {
-        reconnectStrategy: (retries) => {
-          if (retries > 0) return new Error('Max retries reached'); // Do not retry
-          return false;
-        }
+        reconnectStrategy: false
       }
     });
 

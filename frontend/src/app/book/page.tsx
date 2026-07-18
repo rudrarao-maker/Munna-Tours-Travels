@@ -22,6 +22,7 @@ export default function BookPage() {
   const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
   const [selectedHotel, setSelectedHotel] = useState<any>(null);
+  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [date, setDate] = useState('');
   const [passengers, setPassengers] = useState(1);
   const [nights, setNights] = useState(1);
@@ -96,6 +97,7 @@ export default function BookPage() {
         hotelPrice: pricing.hotelPrice,
         taxes: pricing.taxes,
         totalPrice: pricing.totalPrice,
+        seats: selectedSeats,
       });
       setSuccess(true);
     } catch (e) {
@@ -111,9 +113,10 @@ export default function BookPage() {
   const steps = [
     { num: 1, title: 'Route', icon: MapPin },
     { num: 2, title: 'Vehicle', icon: Bus },
-    { num: 3, title: 'Meals', icon: Utensils },
-    { num: 4, title: 'Hotel', icon: Building2 },
-    { num: 5, title: 'Checkout', icon: CreditCard },
+    { num: 3, title: 'Seats', icon: CheckCircle2 },
+    { num: 4, title: 'Meals', icon: Utensils },
+    { num: 5, title: 'Hotel', icon: Building2 },
+    { num: 6, title: 'Checkout', icon: CreditCard },
   ];
 
   if (success) {
@@ -148,7 +151,7 @@ export default function BookPage() {
         {/* Progress Bar */}
         <div className="mb-12 flex justify-between items-center relative max-w-4xl mx-auto">
           <div className="absolute top-1/2 left-0 right-0 h-1 -translate-y-1/2 bg-gray-200 dark:bg-zinc-800 -z-10 rounded-full" />
-          <div className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-blue-600 transition-all duration-500 rounded-full" style={{ width: `${((step - 1) / 4) * 100}%` }} />
+          <div className="absolute top-1/2 left-0 h-1 -translate-y-1/2 bg-blue-600 transition-all duration-500 rounded-full" style={{ width: `${((step - 1) / 5) * 100}%` }} />
           
           {steps.map((s) => (
             <div key={s.num} className="flex flex-col items-center gap-2">
@@ -225,8 +228,62 @@ export default function BookPage() {
                 </motion.div>
               )}
 
-              {/* STEP 3: MEALS */}
+              {/* STEP 3: SEATS */}
               {step === 3 && (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                  <h2 className="text-2xl font-black mb-2">Select Your Seats</h2>
+                  <p className="text-gray-500 mb-6 text-sm">Please select {passengers} seat(s).</p>
+                  
+                  <div className="max-w-md mx-auto bg-gray-50 dark:bg-zinc-800 p-8 rounded-3xl border border-gray-200 dark:border-zinc-700">
+                    <div className="w-full flex justify-center mb-8">
+                      <div className="w-32 h-10 border-4 border-gray-300 dark:border-zinc-600 rounded-t-full rounded-b-xl flex items-center justify-center text-xs font-bold text-gray-400">FRONT</div>
+                    </div>
+                    
+                    <div className="grid grid-cols-5 gap-y-4 gap-x-2">
+                      {Array.from({ length: 40 }).map((_, i) => {
+                        const row = Math.floor(i / 4);
+                        const col = i % 4;
+                        // Map 0,1,2,3 to visual columns 0, 1, (aisle), 3, 4
+                        const gridCol = col < 2 ? col + 1 : col + 2; 
+                        const seatNum = `${row + 1}${['A','B','C','D'][col]}`;
+                        const isSelected = selectedSeats.includes(seatNum);
+                        
+                        return (
+                          <div 
+                            key={seatNum} 
+                            style={{ gridColumn: gridCol }}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
+                              } else {
+                                if (selectedSeats.length < passengers) {
+                                  setSelectedSeats([...selectedSeats, seatNum]);
+                                } else {
+                                  alert(`You can only select ${passengers} seat(s) based on your passenger count.`);
+                                }
+                              }
+                            }}
+                            className={`h-12 rounded-t-xl rounded-b flex items-center justify-center text-xs font-bold cursor-pointer transition-all border-2 ${
+                              isSelected 
+                                ? 'bg-blue-600 border-blue-700 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' 
+                                : 'bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 hover:border-blue-400'
+                            }`}
+                          >
+                            {seatNum}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="mt-6 flex justify-center gap-6 text-sm font-bold text-gray-500">
+                    <div className="flex items-center gap-2"><div className="w-4 h-4 bg-white border-2 border-gray-200 rounded"></div> Available</div>
+                    <div className="flex items-center gap-2"><div className="w-4 h-4 bg-blue-600 border-2 border-blue-700 rounded"></div> Selected</div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 4: MEALS */}
+              {step === 4 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                   <h2 className="text-2xl font-black mb-6">Select Meal Plan</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -244,8 +301,8 @@ export default function BookPage() {
                 </motion.div>
               )}
 
-              {/* STEP 4: HOTEL */}
-              {step === 4 && (
+              {/* STEP 5: HOTEL */}
+              {step === 5 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                   <h2 className="text-2xl font-black mb-2">Select Accommodation</h2>
                   <p className="text-gray-500 mb-6 text-sm">Optional. You can skip this if you don't need a stay.</p>
@@ -281,8 +338,8 @@ export default function BookPage() {
                 </motion.div>
               )}
 
-              {/* STEP 5: CHECKOUT */}
-              {step === 5 && (
+              {/* STEP 6: CHECKOUT */}
+              {step === 6 && (
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                   <h2 className="text-2xl font-black mb-6">Review & Pay</h2>
                   <div className="p-6 rounded-2xl bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 mb-6">
@@ -303,9 +360,12 @@ export default function BookPage() {
                   <button onClick={prevStep} className="px-6 py-3 rounded-xl font-bold border-2 border-gray-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-800 transition">Back</button>
                 ) : <div />}
                 
-                {step < 5 ? (
+                {step < 6 ? (
                   <button onClick={nextStep} 
-                          disabled={step === 1 && (!selectedRoute || !date)}
+                          disabled={
+                            (step === 1 && (!selectedRoute || !date)) ||
+                            (step === 3 && selectedSeats.length !== passengers)
+                          }
                           className="px-8 py-3 rounded-xl font-bold bg-black text-white dark:bg-white dark:text-black hover:opacity-90 transition disabled:opacity-50">
                     Next Step
                   </button>
@@ -333,6 +393,10 @@ export default function BookPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Vehicle Type</span>
                   <span className="font-bold">+ ₹{pricing.vehiclePrice.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Seats ({selectedSeats.length})</span>
+                  <span className="font-bold text-gray-500">{selectedSeats.join(', ') || 'None'}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Meals ({passengers} pax)</span>

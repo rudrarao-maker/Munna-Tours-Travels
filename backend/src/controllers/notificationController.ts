@@ -109,6 +109,32 @@ export const sendNotification = async (req: Request, res: Response) => {
       }
     }
 
+    // Send via SMS
+    if (channel === 'sms' || channel === 'all') {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user?.phone) {
+        // TODO: Integrate with Twilio, MSG91, or Fast2SMS API
+        console.log(`[SMS Stub] Sending SMS to ${user.phone}: ${title} - ${message}`);
+        // await axios.post('https://api.sms-provider.com/send', { to: user.phone, message: `${title}: ${message}` });
+      }
+    }
+
+    // Send via WhatsApp
+    if (channel === 'whatsapp' || channel === 'all') {
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user?.phone) {
+        // TODO: Integrate with WhatsApp Business API (Twilio / Meta)
+        console.log(`[WhatsApp Stub] Sending WhatsApp to ${user.phone}: ${title} - ${message}`);
+      }
+    }
+
+    // Send via Push Notification (FCM/OneSignal)
+    if (channel === 'push' || channel === 'all') {
+      // TODO: Fetch user's FCM device token from DB (requires adding deviceTokens field to User model)
+      console.log(`[Push Stub] Sending Push Notification to User ${userId}: ${title}`);
+      // await admin.messaging().sendToDevice(deviceToken, { notification: { title, body: message } });
+    }
+
     res.status(201).json(notification);
   } catch (error: any) {
     res.status(500).json({ message: 'Error sending notification', error: error.message });
