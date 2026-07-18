@@ -16,7 +16,7 @@ export const getAllBlogs = async (req: Request, res: Response) => {
 
 export const getBlogBySlug = async (req: Request, res: Response) => {
   try {
-    const { slug } = req.params;
+    const slug = req.params.slug as string;
     const blog = await prisma.blog.findUnique({
       where: { slug },
     });
@@ -53,7 +53,7 @@ export const createBlog = async (req: Request, res: Response) => {
 
 export const updateBlog = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const data = req.body;
     
     if (Array.isArray(data.tags)) {
@@ -72,7 +72,7 @@ export const updateBlog = async (req: Request, res: Response) => {
 
 export const deleteBlog = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.blog.delete({
       where: { id },
     });

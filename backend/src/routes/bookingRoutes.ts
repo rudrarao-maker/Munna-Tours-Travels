@@ -1,10 +1,13 @@
 import express from 'express';
-import { getBookings, getBookingById, createBooking, updateBookingStatus, downloadTicket, cancelBooking } from '../controllers/bookingController';
+import { getBookings, getBookingById, createBooking, updateBookingStatus, downloadTicket, cancelBooking, getBookedSeats } from '../controllers/bookingController';
 import { protect, authorize } from '../middlewares/authMiddleware';
 import { validate } from '../middlewares/validate';
 import { createBookingSchema } from '../schemas/bookingSchema';
 
 const router = express.Router();
+
+// New route must be before /:id to avoid collision
+router.get('/seats', getBookedSeats);
 
 router.route('/')
   .get(protect, authorize('admin', 'manager'), getBookings)

@@ -253,7 +253,7 @@ export default function AdminDashboard() {
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={topDestinations} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={4} dataKey="bookings" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                <Pie data={topDestinations} dataKey="bookings" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={4} label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}>
                   {topDestinations.map((_: any, index: number) => (
                     <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}

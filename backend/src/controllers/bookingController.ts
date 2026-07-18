@@ -14,8 +14,8 @@ const prisma = new PrismaClient();
 // @access  Private/Admin
 export const getBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const page = parseInt(req.query.pag as string as string) || 1;
+    const limit = parseInt(req.query.limi as string as string) || 10;
     const skip = (page - 1) * limit;
 
     const [bookings, total] = await Promise.all([
@@ -52,7 +52,7 @@ export const getBookings = async (req: Request, res: Response, next: NextFunctio
 export const getBookingById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
-      where: { id: (req.params.id as string) },
+      where: { id: (req.params.i as string as string) },
       include: { route: true, user: true, hotel: true }
     });
     if (booking) {
@@ -121,7 +121,7 @@ export const updateBookingStatus = async (req: Request, res: Response, next: Nex
   try {
     const { status, paymentStatus } = req.body;
     const booking = await prisma.booking.update({
-      where: { id: (req.params.id as string) },
+      where: { id: (req.params.i as string as string) },
       data: { status, paymentStatus }
     });
     
@@ -140,7 +140,7 @@ export const updateBookingStatus = async (req: Request, res: Response, next: Nex
 export const downloadTicket = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
-      where: { id: (req.params.id as string) },
+      where: { id: (req.params.i as string as string) },
       include: { route: true, user: true, hotel: true }
     });
 
@@ -152,7 +152,7 @@ export const downloadTicket = async (req: AuthRequest, res: Response, next: Next
       return next(new AppError('Not authorized to view this ticket', 403));
     }
 
-    const pdfBuffer = await generateTicketPDF(booking);
+    const pdfBuffer = await generateTicketPDF(booking as any);
 
     res.set({
       'Content-Type': 'application/pdf',
@@ -173,7 +173,7 @@ export const downloadTicket = async (req: AuthRequest, res: Response, next: Next
 export const cancelBooking = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const booking = await prisma.booking.findUnique({
-      where: { id: (req.params.id as string) },
+      where: { id: (req.params.i as string as string) },
     });
 
     if (!booking) {
@@ -217,3 +217,5 @@ export const cancelBooking = async (req: AuthRequest, res: Response, next: NextF
     next(new AppError('Error cancelling booking', 500));
   }
 };
+  
+export const getBookedSeats = async (req: Request, res: Response, next: NextFunction): Promise<void> => { try { const { routeId, date } = req.query; if (!routeId || !date) { res.status(400).json({ message: 'routeId and date are required' }); return; } const bookings = await prisma.booking.findMany({ where: { routeId: routeId as string, date: date as string, status: { not: 'Cancelled' } } }); let bookedSeats: string[] = []; bookings.forEach(b => { try { const seats = JSON.parse(b.seats); if (Array.isArray(seats)) bookedSeats.push(...seats); } catch (e) {} }); res.json(bookedSeats); } catch (error: any) { next(new AppError('Error fetching seats', 500)); } }; 

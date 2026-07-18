@@ -35,8 +35,8 @@ export const getFleetOverview = async (req: Request, res: Response) => {
 // @access  Private/Admin
 export const getFleetLogs = async (req: Request, res: Response) => {
   try {
-    const { vehicleId } = req.params;
-    const { type } = req.query;
+    const vehicleId = req.params.vehicleId as string;
+    const type = req.query.type as string;
 
     const where: any = { vehicleId };
     if (type) where.type = String(type);
@@ -154,7 +154,7 @@ export const getFleetAnalytics = async (req: Request, res: Response) => {
 // @access  Private/Admin
 export const assignDriver = async (req: Request, res: Response) => {
   try {
-    const { vehicleId } = req.params;
+    const vehicleId = req.params.vehicleId as string;
     const { driverId } = req.body;
 
     await prisma.vehicle.update({
@@ -180,7 +180,7 @@ export const assignDriver = async (req: Request, res: Response) => {
 // @access  Private/Admin
 export const updateVehicleStatus = async (req: Request, res: Response) => {
   try {
-    const { vehicleId } = req.params;
+    const vehicleId = req.params.vehicleId as string;
     const { status } = req.body;
 
     const vehicle = await prisma.vehicle.update({

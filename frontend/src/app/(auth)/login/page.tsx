@@ -30,11 +30,12 @@ export default function LoginPage() {
       
       if (!response.ok) throw new Error(data.message || 'Login failed');
 
+      const userObj = { id: data.id, name: data.name, role: data.role };
       // Set user object in localStorage for the layouts to use
-      localStorage.setItem('user', JSON.stringify({ id: data.id, name: data.name, role: data.role }));
+      localStorage.setItem('user', JSON.stringify(userObj));
       
       // Call AuthContext login to set token and handle redirect
-      login(data.token, data.role);
+      login(data.token, userObj);
     } catch (err: any) {
       setError(err.message);
     } finally {

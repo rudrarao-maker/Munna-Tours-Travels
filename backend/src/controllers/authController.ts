@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { authenticator } from 'otplib';
+import * as otplib from 'otplib';
+const authenticator = (otplib as any).authenticator || (otplib as any).default?.authenticator || (otplib as any);
 import QRCode from 'qrcode';
 import prisma from '../config/prisma';
 import { AuthRequest } from '../middlewares/authMiddleware';

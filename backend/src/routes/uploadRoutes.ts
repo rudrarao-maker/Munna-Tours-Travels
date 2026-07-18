@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { protect } from '../middlewares/authMiddleware';
+import { protect, AuthRequest } from '../middlewares/authMiddleware';
 import prisma from '../config/prisma';
 
 const router = express.Router();
@@ -19,7 +19,8 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename(req, file, cb) {
-    cb(null, `${req.user?.id}-${Date.now()}${path.extname(file.originalname)}`);
+    const userReq = req as unknown as AuthRequest;
+    cb(null, `${userReq.user?.id || 'guest'}-${Date.now()}${path.extname(file.originalname)}`);
   }
 });
 
@@ -47,17 +48,18 @@ const upload = multer({
 // @desc    Upload user avatar
 // @access  Private
 router.post('/avatar', protect, upload.single('avatar'), async (req, res): Promise<void> => {
+  const authReq = req as AuthRequest;
   try {
-    if (!req.file) {
+    if (!authReq.file) {
       res.status(400).json({ message: 'No file uploaded' });
       return;
     }
 
-    const avatarUrl = `/uploads/${req.file.filename}`;
+    const avatarUrl = `/uploads/${authReq.file.filename}`;
 
     // Update user profile in DB
     const updatedUser = await prisma.user.update({
-      where: { id: req.user?.id },
+      where: { id: authReq.user?.id },
       data: { avatar: avatarUrl }
     });
 
@@ -76,6 +78,7 @@ router.post('/avatar', protect, upload.single('avatar'), async (req, res): Promi
 // @access  Private/Admin
 // We can use this later for Tour Packages
 router.post('/gallery', protect, upload.array('images', 5), async (req, res): Promise<void> => {
+  const authReq = req as AuthRequest;
   try {
     if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
       res.status(400).json({ message: 'No files uploaded' });

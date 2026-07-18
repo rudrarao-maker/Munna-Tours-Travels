@@ -23,28 +23,28 @@ export const getReport = async (req: Request, res: Response): Promise<void> => {
           orderBy: { createdAt: 'desc' },
         });
 
-        const totalRevenue = bookings.reduce((sum, b) => sum + (parseFloat(b.totalPrice) || 0), 0);
+        const totalRevenue = bookings.reduce((sum, b) => sum + (parseFloat(b.totalPrice as unknown as string) || 0), 0);
         const paidBookings = bookings.filter(b => b.paymentStatus === 'Paid');
-        const pendingRevenue = bookings.filter(b => b.paymentStatus === 'Pending').reduce((sum, b) => sum + (parseFloat(b.totalPrice) || 0), 0);
+        const pendingRevenue = bookings.filter(b => b.paymentStatus === 'Pending').reduce((sum, b) => sum + (parseFloat(b.totalPrice as unknown as string) || 0), 0);
 
         // Revenue by route
         const routeRevenue: Record<string, number> = {};
         bookings.forEach(b => {
           const routeKey = b.route ? `${b.route.from} → ${b.route.to}` : 'Unknown';
-          routeRevenue[routeKey] = (routeRevenue[routeKey] || 0) + (parseFloat(b.totalPrice) || 0);
+          routeRevenue[routeKey] = (routeRevenue[routeKey] || 0) + (parseFloat(b.totalPrice as unknown as string) || 0);
         });
 
         // Daily revenue for chart
         const dailyRevenue: Record<string, number> = {};
         bookings.forEach(b => {
           const day = new Date(b.createdAt).toISOString().split('T')[0];
-          dailyRevenue[day] = (dailyRevenue[day] || 0) + (parseFloat(b.totalPrice) || 0);
+          dailyRevenue[day] = (dailyRevenue[day] || 0) + (parseFloat(b.totalPrice as unknown as string) || 0);
         });
 
         res.json({
           type: 'revenue',
           totalRevenue,
-          paidRevenue: paidBookings.reduce((sum, b) => sum + (parseFloat(b.totalPrice) || 0), 0),
+          paidRevenue: paidBookings.reduce((sum, b) => sum + (parseFloat(b.totalPrice as unknown as string) || 0), 0),
           pendingRevenue,
           totalBookings: bookings.length,
           avgBookingValue: bookings.length > 0 ? (totalRevenue / bookings.length).toFixed(2) : 0,
@@ -166,10 +166,10 @@ export const getSummary = async (req: Request, res: Response) => {
     ]);
 
     const allBookings = await prisma.booking.findMany({ select: { totalPrice: true, status: true, paymentStatus: true } });
-    const totalRevenue = allBookings.reduce((sum, b) => sum + (parseFloat(b.totalPrice) || 0), 0);
-    const paidRevenue = allBookings.filter(b => b.paymentStatus === 'Paid').reduce((sum, b) => sum + (parseFloat(b.totalPrice) || 0), 0);
+    const totalRevenue = allBookings.reduce((sum, b) => sum + (parseFloat(b.totalPrice as unknown as string) || 0), 0);
+    const paidRevenue = allBookings.filter(b => b.paymentStatus === 'Paid').reduce((sum, b) => sum + (parseFloat(b.totalPrice as unknown as string) || 0), 0);
 
-    const totalPackages = await prisma.package.count();
+    const totalPackages = await prisma.tourPackage.count();
     const totalHotels = await prisma.hotel.count();
     const totalFeedback = await prisma.feedback.count();
     const avgFeedbackRating = await prisma.feedback.aggregate({ _avg: { rating: true } });

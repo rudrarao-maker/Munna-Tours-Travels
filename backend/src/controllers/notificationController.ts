@@ -40,7 +40,7 @@ export const getNotifications = async (req: AuthRequest, res: Response) => {
 export const markAsRead = async (req: AuthRequest, res: Response) => {
   try {
     const notification = await prisma.notification.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { isRead: true, readAt: new Date() },
     });
     res.json(notification);
@@ -174,7 +174,7 @@ export const broadcastNotification = async (req: Request, res: Response) => {
 // @access  Private
 export const deleteNotification = async (req: Request, res: Response) => {
   try {
-    await prisma.notification.delete({ where: { id: req.params.id } });
+    await prisma.notification.delete({ where: { id: req.params.id as string } });
     res.json({ message: 'Notification deleted' });
   } catch (error: any) {
     res.status(500).json({ message: 'Error deleting notification', error: error.message });

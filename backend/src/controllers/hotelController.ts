@@ -54,7 +54,7 @@ export const getHotels = async (req: Request, res: Response) => {
 export const getHotelById = async (req: Request, res: Response): Promise<void> => {
   try {
     const hotel = await prisma.hotel.findUnique({
-      where: { id: req.params.id }
+      where: { id: req.params.id as string }
     });
     if (!hotel) {
       res.status(404).json({ message: 'Hotel not found' });
@@ -84,7 +84,7 @@ export const createHotel = async (req: Request, res: Response) => {
 export const updateHotel = async (req: Request, res: Response) => {
   try {
     const hotel = await prisma.hotel.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: req.body,
     });
     res.json(hotel);
@@ -98,7 +98,7 @@ export const updateHotel = async (req: Request, res: Response) => {
 // @access  Private/Admin
 export const deleteHotel = async (req: Request, res: Response) => {
   try {
-    await prisma.hotel.delete({ where: { id: req.params.id } });
+    await prisma.hotel.delete({ where: { id: req.params.id as string } });
     res.json({ message: 'Hotel removed' });
   } catch (error: any) {
     res.status(500).json({ message: 'Error deleting hotel', error: error.message });

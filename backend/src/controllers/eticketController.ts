@@ -70,7 +70,7 @@ export const generateETicket = async (req: Request, res: Response) => {
 export const getETicketByBooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const eTicket = await prisma.eTicket.findUnique({
-      where: { bookingId: req.params.bookingId },
+      where: { bookingId: req.params.bookingId as string },
       // Note: Prisma SQLite doesn't support nested includes deeply, so we do a separate query
     });
 
@@ -97,7 +97,7 @@ export const getETicketByBooking = async (req: Request, res: Response): Promise<
 export const getETicketByNumber = async (req: Request, res: Response): Promise<void> => {
   try {
     const eTicket = await prisma.eTicket.findUnique({
-      where: { ticketNumber: req.params.ticketNumber },
+      where: { ticketNumber: req.params.ticketNumber as string },
     });
 
     if (!eTicket) {

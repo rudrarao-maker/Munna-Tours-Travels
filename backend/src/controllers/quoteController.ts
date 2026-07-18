@@ -10,16 +10,16 @@ export const createQuoteRequest = async (req: Request, res: Response) => {
 
     // Send confirmation email to customer
     await sendEmail({
-      email: newQuote.email,
+      to: newQuote.email,
       subject: 'Quote Request Received - Munna Travels',
-      message: `Hi ${newQuote.contactName},\n\nWe have received your charter request from ${newQuote.pickup} to ${newQuote.dropoff}.\nOur team is calculating the best rate and will get back to you shortly.\n\nThank you,\nMunna Travels Team`,
+      text: `Hi ${newQuote.contactName},\n\nWe have received your charter request from ${newQuote.pickup} to ${newQuote.dropoff}.\nOur team is calculating the best rate and will get back to you shortly.\n\nThank you,\nMunna Travels Team`,
     });
 
     // Send notification email to admin
     await sendEmail({
-      email: process.env.ADMIN_EMAIL || 'admin@munna.com',
+      to: process.env.ADMIN_EMAIL || 'admin@munna.com',
       subject: 'New Quote Request',
-      message: `New Quote Alert!\n\n${newQuote.passengers} passengers from ${newQuote.pickup} to ${newQuote.dropoff}.\nContact: ${newQuote.contactName} (${newQuote.phone})\n\nLogin to ERP to view full details.`,
+      text: `New Quote Alert!\n\n${newQuote.passengers} passengers from ${newQuote.pickup} to ${newQuote.dropoff}.\nContact: ${newQuote.contactName} (${newQuote.phone})\n\nLogin to ERP to view full details.`,
     });
 
     res.status(201).json(newQuote);

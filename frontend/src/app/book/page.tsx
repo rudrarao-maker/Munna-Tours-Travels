@@ -23,7 +23,19 @@ export default function BookPage() {
   const [selectedMeal, setSelectedMeal] = useState<any>(null);
   const [selectedHotel, setSelectedHotel] = useState<any>(null);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [bookedSeats, setBookedSeats] = useState<string[]>([]);
   const [date, setDate] = useState('');
+
+  // Fetch booked seats when route/date changes
+  useEffect(() => {
+    if (selectedRoute && date) {
+      axios.get(`/bookings/seats?routeId=${selectedRoute.id}&date=${date}`)
+        .then(res => setBookedSeats(res.data))
+        .catch(err => console.error('Failed to fetch booked seats', err));
+    } else {
+      setBookedSeats([]);
+    }
+  }, [selectedRoute, date]);
   const [passengers, setPassengers] = useState(1);
   const [nights, setNights] = useState(1);
 
@@ -247,12 +259,15 @@ export default function BookPage() {
                         const gridCol = col < 2 ? col + 1 : col + 2; 
                         const seatNum = `${row + 1}${['A','B','C','D'][col]}`;
                         const isSelected = selectedSeats.includes(seatNum);
+                        const isBooked = bookedSeats.includes(seatNum);
+                        const isWindow = col === 0 || col === 3;
                         
                         return (
                           <div 
                             key={seatNum} 
                             style={{ gridColumn: gridCol }}
                             onClick={() => {
+                              if (isBooked) return;
                               if (isSelected) {
                                 setSelectedSeats(selectedSeats.filter(s => s !== seatNum));
                               } else {
@@ -263,13 +278,18 @@ export default function BookPage() {
                                 }
                               }
                             }}
-                            className={`h-12 rounded-t-xl rounded-b flex items-center justify-center text-xs font-bold cursor-pointer transition-all border-2 ${
-                              isSelected 
-                                ? 'bg-blue-600 border-blue-700 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' 
-                                : 'bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 hover:border-blue-400'
+                            className={`h-12 relative rounded-t-xl rounded-b flex items-center justify-center text-xs font-bold transition-all border-2 ${
+                              isBooked 
+                                ? 'bg-red-100 border-red-300 text-red-400 cursor-not-allowed dark:bg-red-900/20 dark:border-red-900 dark:text-red-800'
+                                : isSelected 
+                                  ? 'bg-blue-600 border-blue-700 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] cursor-pointer' 
+                                  : 'bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 hover:border-blue-400 cursor-pointer text-gray-700 dark:text-gray-300'
                             }`}
                           >
                             {seatNum}
+                            {isWindow && !isBooked && (
+                              <div className="absolute -left-1 -right-1 bottom-1 h-0.5 bg-blue-200 dark:bg-blue-900/50 rounded-full opacity-50 pointer-events-none" />
+                            )}
                           </div>
                         );
                       })}
@@ -278,6 +298,7 @@ export default function BookPage() {
                   <div className="mt-6 flex justify-center gap-6 text-sm font-bold text-gray-500">
                     <div className="flex items-center gap-2"><div className="w-4 h-4 bg-white border-2 border-gray-200 rounded"></div> Available</div>
                     <div className="flex items-center gap-2"><div className="w-4 h-4 bg-blue-600 border-2 border-blue-700 rounded"></div> Selected</div>
+                    <div className="flex items-center gap-2"><div className="w-4 h-4 bg-red-100 border-2 border-red-300 rounded"></div> Booked</div>
                   </div>
                 </motion.div>
               )}

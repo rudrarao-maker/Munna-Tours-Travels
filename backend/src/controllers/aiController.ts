@@ -248,7 +248,7 @@ export const getSavedTripPlans = async (req: AuthRequest, res: Response) => {
 export const getChatHistory = async (req: Request, res: Response) => {
   try {
     const messages = await prisma.chatMessage.findMany({
-      where: { sessionId: req.params.sessionId },
+      where: { sessionId: req.params.sessionId as string },
       orderBy: { createdAt: 'asc' },
     });
     res.json(messages);

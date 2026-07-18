@@ -26,7 +26,7 @@ export const generateInvoice = async (req: Request, res: Response) => {
       return;
     }
 
-    const subtotal = parseFloat(booking.totalPrice) || 0;
+    const subtotal = parseFloat(booking.totalPrice as unknown as string) || 0;
     const tax = parseFloat((subtotal * 0.05).toFixed(2)); // 5% GST
     const total = subtotal + tax;
 
@@ -117,7 +117,7 @@ export const getInvoices = async (req: Request, res: Response) => {
 export const getInvoiceById = async (req: Request, res: Response): Promise<void> => {
   try {
     const invoice = await prisma.invoice.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         booking: {
           include: {
@@ -145,7 +145,7 @@ export const getInvoiceById = async (req: Request, res: Response): Promise<void>
 export const getInvoiceByBookingId = async (req: Request, res: Response): Promise<void> => {
   try {
     const invoice = await prisma.invoice.findUnique({
-      where: { bookingId: req.params.bookingId },
+      where: { bookingId: req.params.bookingId as string },
       include: {
         booking: {
           include: {
@@ -173,7 +173,7 @@ export const getInvoiceByBookingId = async (req: Request, res: Response): Promis
 export const downloadInvoicePDF = async (req: Request, res: Response): Promise<void> => {
   try {
     const invoice = await prisma.invoice.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       include: {
         booking: { include: { route: true, user: true } },
       },
@@ -185,7 +185,7 @@ export const downloadInvoicePDF = async (req: Request, res: Response): Promise<v
     }
 
     // Reuse the ticket PDF generator for invoice format
-    const pdfBuffer = await generateTicketPDF(invoice.booking);
+    const pdfBuffer = await generateTicketPDF(invoice.booking as any);
 
     res.set({
       'Content-Type': 'application/pdf',

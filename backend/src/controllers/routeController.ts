@@ -40,7 +40,7 @@ export const getRoutes = async (req: Request, res: Response) => {
 export const getRouteById = async (req: Request, res: Response): Promise<void> => {
   try {
     const route = await prisma.route.findUnique({
-      where: { routeId: (req.params.id as string) },
+      where: { routeId: (req.params.i as string as string) },
     });
     if (!route) {
       res.status(404).json({ message: 'Route not found' });
@@ -68,7 +68,7 @@ export const createRoute = async (req: Request, res: Response) => {
 export const deleteRoute = async (req: Request, res: Response): Promise<void> => {
   try {
     await prisma.route.delete({
-      where: { id: (req.params.id as string) },
+      where: { id: (req.params.i as string as string) },
     });
     // Invalidate routes cache on mutation
     await invalidateCache(ROUTES_CACHE_KEY);
@@ -81,7 +81,7 @@ export const deleteRoute = async (req: Request, res: Response): Promise<void> =>
 export const updateRoute = async (req: Request, res: Response): Promise<void> => {
   try {
     const updatedRoute = await prisma.route.update({
-      where: { id: (req.params.id as string) },
+      where: { id: (req.params.i as string as string) },
       data: req.body,
     });
     // Invalidate routes cache on mutation
@@ -99,7 +99,7 @@ export const seedRoutes = async (req: Request, res: Response) => {
 export const getDynamicPrice = async (req: Request, res: Response): Promise<void> => {
   try {
     const { date } = req.query;
-    const routeId = req.params.id;
+    const routeId = req.params.id as string;
 
     if (!date || typeof date !== 'string') {
       res.status(400).json({ message: 'Date query param required' });

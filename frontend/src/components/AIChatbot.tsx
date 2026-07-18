@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot, User, ArrowRight } from 'lucide-react';
 import { popularRoutes } from '@/lib/data';
 import Link from 'next/link';
+import axios from '@/lib/axios';
 
 type Message = {
   id: string;
@@ -22,63 +23,47 @@ export default function AIChatbot() {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [sessionId, setSessionId] = useState('');
+
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isOpen]);
 
-  const handleSend = () => {
+  useEffect(() => {
+    setSessionId(`session-${Math.random().toString(36).substring(2, 10)}`);
+  }, []);
+
+  const handleSend = async () => {
     if (!input.trim()) return;
     
     const userMsg: Message = { id: Date.now().toString(), sender: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
+    const userInput = input.trim();
     setInput('');
     
-    // Simulate AI thinking & response
-    setTimeout(() => {
-      generateResponse(userMsg.text);
-    }, 1000);
+    try {
+      const res = await axios.post('/ai/chat', {
+        message: userInput,
+        sessionId
+      });
+      
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        sender: 'ai',
+        text: res.data.reply || res.data.message
+      }]);
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        sender: 'ai',
+        text: "I'm sorry, I'm having trouble connecting right now. Please try again later."
+      }]);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSend();
-  };
-
-  const generateResponse = (userInput: string) => {
-    const lowerInput = userInput.toLowerCase();
-    let aiMsg: Message = { id: (Date.now() + 1).toString(), sender: 'ai', text: '' };
-
-    // Simple Intent Parsing (Mock AI)
-    const matchedRoute = popularRoutes.find(r => 
-      lowerInput.includes(r.to.toLowerCase()) || 
-      lowerInput.includes(r.from.toLowerCase())
-    );
-
-    if (matchedRoute) {
-      aiMsg.text = `I have the perfect recommendation for you! Our bus from ${matchedRoute.from} to ${matchedRoute.to} is highly rated. It takes about ${matchedRoute.time} starting at just ${matchedRoute.price} per seat.`;
-      aiMsg.isWidget = true;
-      aiMsg.routeId = matchedRoute.id;
-      
-      // Follow up convincing message
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: (Date.now() + 2).toString(),
-          sender: 'ai',
-          text: `Trust me, this is a premium experience you won't forget. Our ${matchedRoute.type} coaches are incredibly comfortable. Let me know if you want to request a quote!`
-        }]);
-      }, 1500);
-
-    } else if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
-      aiMsg.text = "Hello! I'm here to help you plan your bus journey. Are you looking for a direct route or a custom charter bus for your group?";
-    } else if (lowerInput.includes('budget') || lowerInput.includes('cheap')) {
-      aiMsg.text = "We have great options for every budget! We have Non-A/C and Semi-Sleeper buses available. Just let me know where you want to go!";
-    } else if (lowerInput.includes('charter') || lowerInput.includes('group')) {
-      aiMsg.text = "Absolutely! We specialize in custom charter buses for groups. You can head over to our Routes page and fill out the Custom Route form at the bottom.";
-    } else {
-      aiMsg.text = "That sounds great! To give you the best recommendation, could you tell me your pickup city and destination? (e.g. 'Ahmedabad to Pune')";
-    }
-
-    setMessages(prev => [...prev, aiMsg]);
   };
 
   return (

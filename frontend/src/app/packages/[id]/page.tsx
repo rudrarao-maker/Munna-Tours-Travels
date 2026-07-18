@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { MapPin, Calendar, Clock, Star, Users, Check, ArrowRight, Shield } from 'lucide-react';
 import axios from '@/lib/axios';
+import WeatherWidget from '@/components/WeatherWidget';
 
 export default function PackageDetails() {
   const { id } = useParams();
@@ -81,6 +82,12 @@ export default function PackageDetails() {
               <p className="text-lg font-medium leading-relaxed" style={{ color: 'var(--muted)' }}>
                 {pkg.description}
               </p>
+            </div>
+
+            {/* Weather Forecast */}
+            <div>
+              <h3 className="text-2xl font-black mb-6" style={{ color: 'var(--foreground)' }}>Local Weather Forecast</h3>
+              <WeatherWidget destination={pkg.destination} />
             </div>
 
             {/* Inclusions */}

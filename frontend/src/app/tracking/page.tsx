@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { MapPin, Bus, AlertCircle, Clock, Info } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
+import EmergencySOSModal from '@/components/EmergencySOSModal';
 
 // Leaflet requires window to be defined, so we dynamically import the Map components
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
@@ -31,6 +32,7 @@ const getBusIcon = () => {
 export default function LiveTracking() {
   const [position, setPosition] = useState<[number, number]>([19.0760, 72.8777]); // Default Mumbai
   const [loading, setLoading] = useState(true);
+  const [sosOpen, setSosOpen] = useState(false);
 
   useEffect(() => {
     // Simulate real-time GPS updates from a moving bus
@@ -119,13 +121,14 @@ export default function LiveTracking() {
             <button className="px-6 py-3 rounded-xl font-bold bg-black text-white dark:bg-white dark:text-black flex items-center gap-2 transition hover:opacity-90">
               <Info size={18} /> View Route Details
             </button>
-            <button className="px-4 py-3 rounded-xl font-bold text-red-500 bg-red-50 dark:bg-red-950/30 flex items-center gap-2 transition hover:bg-red-100">
+            <button onClick={() => setSosOpen(true)} className="px-4 py-3 rounded-xl font-bold text-red-500 bg-red-50 dark:bg-red-950/30 flex items-center gap-2 transition hover:bg-red-100">
               <AlertCircle size={18} /> Emergency / SOS
             </button>
           </div>
         </div>
       </section>
 
+      <EmergencySOSModal isOpen={sosOpen} onClose={() => setSosOpen(false)} />
     </div>
   );
 }

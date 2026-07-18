@@ -115,7 +115,7 @@ export const respondToFeedback = async (req: Request, res: Response) => {
   try {
     const { adminResponse } = req.body;
     const feedback = await prisma.feedback.update({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
       data: { adminResponse },
     });
     res.json(feedback);

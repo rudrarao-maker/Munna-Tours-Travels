@@ -5,8 +5,8 @@ import { AppError } from '../utils/AppError';
 
 export const getAllPackages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const page = parseInt(req.query.pag as string as string) || 1;
+    const limit = parseInt(req.query.limi as string as string) || 10;
     const skip = (page - 1) * limit;
 
     const cacheKey = `packages:all:page:${page}:limit:${limit}`;
@@ -46,7 +46,7 @@ export const getAllPackages = async (req: Request, res: Response, next: NextFunc
 
 export const getPackageByIdOrSlug = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const tourPackage = await prisma.tourPackage.findFirst({
       where: {
         OR: [
@@ -102,7 +102,7 @@ export const createPackage = async (req: Request, res: Response, next: NextFunct
 
 export const updatePackage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const data = req.body;
 
     const updatedPackage = await prisma.tourPackage.update({
@@ -126,7 +126,7 @@ export const updatePackage = async (req: Request, res: Response, next: NextFunct
 
 export const deletePackage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.tourPackage.delete({
       where: { id }
     });

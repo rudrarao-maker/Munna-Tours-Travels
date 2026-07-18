@@ -44,7 +44,7 @@ export const updateDriverLocation = async (req: AuthRequest, res: Response) => {
 export const getDriverLocation = async (req: Request, res: Response): Promise<void> => {
   try {
     const location = await prisma.driverLocation.findFirst({
-      where: { driverId: req.params.driverId },
+      where: { driverId: req.params.driverId as string },
       orderBy: { timestamp: 'desc' },
       include: {
         driver: { select: { name: true, phone: true, avatar: true } },
@@ -122,7 +122,7 @@ export const getFleetLocations = async (req: Request, res: Response) => {
 // @access  Private/Admin
 export const getLocationHistory = async (req: Request, res: Response) => {
   try {
-    const { driverId } = req.params;
+    const driverId = req.params.driverId as string;
     const { hours = '24' } = req.query;
 
     const since = new Date();
